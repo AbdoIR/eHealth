@@ -1,6 +1,6 @@
 # HealthRecords — Blockchain-Based Medical Records
 
-A decentralized health records management system built on Ethereum. A Solidity smart contract handles doctor authorization, patient consent, and encrypted medical visit storage.
+A decentralized health records management system built on Ethereum. A Solidity smart contract handles doctor authorization, patient consent, and encrypted medical visit storage. A web front-end for interacting with the contract is planned but not yet implemented.
 
 ## Project Structure
 
@@ -62,6 +62,12 @@ Note the deployed contract address from the output.
 cd Blockchain
 truffle test
 ```
+
+## Roadmap
+
+- [x] Smart contract (Solidity) — doctor management, patient consent, encrypted visit storage
+- [x] Unit tests (Truffle/JS)
+- [ ] Web front-end (React + Web3.js / MetaMask integration)
 
 ## License
 
