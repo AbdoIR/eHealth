@@ -12,13 +12,18 @@ contract HealthRecords {
 
     mapping(address => Visit[]) private patientHistory;
     mapping(address => bool) public isDoctor;
+    mapping(address => bool) public isPatient;
     mapping(address => mapping(address => bool)) public patientConsent;
+    mapping(address => mapping(address => bool)) public pendingConsent;
 
     // You can have up to three indexed parameters per event
     event DoctorAdded(address indexed doctor);
     event DoctorRemoved(address indexed doctor);
+    event PatientRegistered(address indexed patient);
     event VisitAdded(address indexed patient, address indexed doctor, uint256 timestamp);
+    event ConsentRequested(address indexed patient, address indexed doctor);
     event ConsentGranted(address indexed patient, address indexed doctor);
+    event ConsentRefused(address indexed patient, address indexed doctor);
     event ConsentRevoked(address indexed patient, address indexed doctor);
 
     modifier onlyOwner() {
@@ -27,7 +32,12 @@ contract HealthRecords {
     }
 
     modifier onlyDoctor() {
-        require(isDoctor[msg.sender], "Only authorized doctors can add visits.");
+        require(isDoctor[msg.sender], "Only authorized doctors can perform this action.");
+        _;
+    }
+
+    modifier onlyPatient() {
+        require(isPatient[msg.sender], "Only registered patients can perform this action.");
         _;
     }
 
@@ -37,7 +47,14 @@ contract HealthRecords {
         emit DoctorAdded(msg.sender);
     }
 
-    // --- Doctor Management (owner only) ---
+    // --- Registration & Management ---
+
+    function registerPatient() public {
+        require(!isPatient[msg.sender], "Already registered as a patient.");
+        require(!isDoctor[msg.sender], "Doctors cannot register as patients.");
+        isPatient[msg.sender] = true;
+        emit PatientRegistered(msg.sender);
+    }
 
     function addDoctor(address _doctor) public onlyOwner {
         require(!isDoctor[_doctor], "Address is already a doctor.");
@@ -54,13 +71,31 @@ contract HealthRecords {
 
     // --- Patient Consent ---
 
-    function grantConsent(address _doctor) public {
+    function requestConsent(address _patient) public onlyDoctor {
+        require(isPatient[_patient], "Address is not a registered patient.");
+        require(!patientConsent[_patient][msg.sender], "Consent is already granted.");
+        require(!pendingConsent[_patient][msg.sender], "Consent request is already pending.");
+        
+        pendingConsent[_patient][msg.sender] = true;
+        emit ConsentRequested(_patient, msg.sender);
+    }
+
+    function grantConsent(address _doctor) public onlyPatient {
         require(isDoctor[_doctor], "Address is not an authorized doctor.");
+        
+        pendingConsent[msg.sender][_doctor] = false; // clear if existed
         patientConsent[msg.sender][_doctor] = true;
         emit ConsentGranted(msg.sender, _doctor);
     }
 
-    function revokeConsent(address _doctor) public {
+    function refuseConsent(address _doctor) public onlyPatient {
+        require(pendingConsent[msg.sender][_doctor], "No pending consent request from this doctor.");
+        
+        pendingConsent[msg.sender][_doctor] = false;
+        emit ConsentRefused(msg.sender, _doctor);
+    }
+
+    function revokeConsent(address _doctor) public onlyPatient {
         patientConsent[msg.sender][_doctor] = false;
         emit ConsentRevoked(msg.sender, _doctor);
     }
