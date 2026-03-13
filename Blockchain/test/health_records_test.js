@@ -59,7 +59,27 @@ contract("HealthRecords", (accounts) => {
     }
   });
 
+  // --- Registration & Management ---
+
+  it("should allow a patient to register", async () => {
+    const instance = await HealthRecords.deployed();
+    const tx = await instance.registerPatient({ from: patient });
+    
+    const isPat = await instance.isPatient(patient);
+    assert.equal(isPat, true, "Address should be registered as a patient.");
+    assert.equal(tx.logs[0].event, "PatientRegistered", "Should emit PatientRegistered event.");
+  });
+
   // --- Patient Consent ---
+
+  it("should allow a doctor to request consent", async () => {
+    const instance = await HealthRecords.deployed();
+    const tx = await instance.requestConsent(patient, { from: owner });
+
+    const isPending = await instance.pendingConsent(patient, owner);
+    assert.equal(isPending, true, "Consent request should be pending.");
+    assert.equal(tx.logs[0].event, "ConsentRequested", "Should emit ConsentRequested event.");
+  });
 
   it("should allow a patient to grant consent to a doctor", async () => {
     const instance = await HealthRecords.deployed();
@@ -82,6 +102,7 @@ contract("HealthRecords", (accounts) => {
 
   it("should allow a patient to revoke consent", async () => {
     const instance = await HealthRecords.deployed();
+    await instance.requestConsent(patient, { from: doctor2 });
     await instance.grantConsent(doctor2, { from: patient });
     const tx = await instance.revokeConsent(doctor2, { from: patient });
 
