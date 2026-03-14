@@ -62,11 +62,13 @@ export default function UploadRecordModal({ isOpen, onClose, onUpload }) {
                 onChange={(e) => setDraft({ ...draft, date: e.target.value })}
               />
             </FormField>
-            <FormField label="Status">
+            <FormField label={<span className="after:content-['*'] after:text-danger after:ml-0.5">Approval Status</span>}>
               <Select
                 variant="bordered"
+                aria-label="Approval Status"
                 selectedKeys={[draft.status]}
                 onChange={(e) => setDraft({ ...draft, status: e.target.value })}
+                disableAnimation
               >
                 <SelectItem key="Draft" value="Draft">Draft</SelectItem>
                 <SelectItem key="Pending Review" value="Pending Review">Pending Review</SelectItem>

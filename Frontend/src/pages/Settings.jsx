@@ -4,7 +4,7 @@ import Card from '../components/ui/Card'
 import { useAuth } from '../context/AuthContext'
 import { useAppearance } from '../context/AppearanceContext'
 import FormField from '../components/ui/FormField'
-import { Select, SelectItem, Chip } from '@heroui/react'
+import { Select, SelectItem, Chip, Button } from '@heroui/react'
 import CustomInput, { decoratedSelectClassNames } from '../components/ui/CustomInput'
 
 const ACCENTS = [
@@ -55,6 +55,15 @@ export default function Settings() {
   const { user } = useAuth()
   const { theme, accent, setTheme, setAccent } = useAppearance()
 
+  const formatTime12h = (time24h) => {
+    if (!time24h) return '';
+    const [hours, minutes] = time24h.split(':');
+    let h = parseInt(hours, 10);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12; // Convert '0' to '12'
+    return `${h}:${minutes} ${ampm}`;
+  };
+
   return (
     <div>
       <PageHeader
@@ -72,62 +81,50 @@ export default function Settings() {
         <SettingSection icon={User} title="Profile Information">
           <div className="space-y-6">
             <FormField label="Full Name">
-              <CustomInput defaultValue={user.name} />
+              <CustomInput defaultValue={user.name} disabled />
             </FormField>
-            <FormField label="Email Address">
-              <CustomInput type="email" defaultValue={user.email} />
-            </FormField>
-            <FormField label="Role / Specialty">
-              <CustomInput defaultValue={user.role} />
-            </FormField>
+            {user.userType === 'doctor' && (
+              <FormField label="Specialty">
+                <CustomInput defaultValue="Doctor" disabled />
+              </FormField>
+            )}
+            {user.userType === 'patient' && (
+              <>
+                <FormField label="Blood Type">
+                  <CustomInput defaultValue={user.bloodType} disabled />
+                </FormField>
+                <FormField label="Phone Number">
+                  <CustomInput defaultValue={user.phone} disabled />
+                </FormField>
+              </>
+            )}
           </div>
         </SettingSection>
 
-        {/* Clinic */}
-        <SettingSection icon={Building2} title="Clinic Details">
-          <div className="space-y-6">
-            <FormField label="Clinic Name">
-              <CustomInput defaultValue={user.clinic} />
-            </FormField>
-            <FormField label="Timezone">
-              <Select variant="bordered" classNames={decoratedSelectClassNames} defaultSelectedKeys={["America/New_York"]}>
-                <SelectItem key="America/New_York" className={selectItemClassName}>Eastern Time (ET)</SelectItem>
-                <SelectItem key="America/Chicago" className={selectItemClassName}>Central Time (CT)</SelectItem>
-                <SelectItem key="America/Los_Angeles" className={selectItemClassName}>Pacific Time (PT)</SelectItem>
-                <SelectItem key="Europe/London" className={selectItemClassName}>London (GMT)</SelectItem>
-              </Select>
-            </FormField>
-            <FormField label="Working Hours">
-              <div className="flex flex-row items-center gap-3">
-                <div className="w-32">
-                  <CustomInput type="time" defaultValue="08:00" className="h-10" />
+        {/* Clinic (Doctors Only) */}
+        {user.userType === 'doctor' && (
+          <SettingSection icon={Building2} title="Clinic Details">
+            <div className="space-y-6">
+              <FormField label="Clinic Name">
+                <CustomInput defaultValue={user.clinic} disabled />
+              </FormField>
+              <FormField label="Timezone" description="Global display format for dates & times.">
+                <CustomInput defaultValue={user.timezone || "America/New_York"} disabled />
+              </FormField>
+              <FormField label="Working Hours">
+                <div className="flex flex-row items-center gap-3">
+                  <div className="w-32">
+                    <CustomInput type="text" defaultValue={formatTime12h(user.workingHoursStart || "08:00")} className="h-10 text-center" disabled />
+                  </div>
+                  <span className="text-slate-400 dark:text-slate-500 text-sm font-medium">to</span>
+                  <div className="w-32">
+                    <CustomInput type="text" defaultValue={formatTime12h(user.workingHoursEnd || "18:00")} className="h-10 text-center" disabled />
+                  </div>
                 </div>
-                <span className="text-slate-400 dark:text-slate-500 text-sm font-medium">to</span>
-                <div className="w-32">
-                  <CustomInput type="time" defaultValue="18:00" className="h-10" />
-                </div>
-              </div>
-            </FormField>
-          </div>
-        </SettingSection>
-
-        {/* Security */}
-        <SettingSection icon={Lock} title="Security">
-          <div className="space-y-6">
-            <FormField label="Current Password">
-              <CustomInput type="password" placeholder="••••••••" />
-            </FormField>
-            <FormField label="New Password">
-              <CustomInput type="password" placeholder="••••••••" />
-            </FormField>
-            <FormField 
-              label="Confirm New Password" 
-              description="Minimum 12 characters. Include uppercase, number, and symbol."
-            >
-              <CustomInput type="password" placeholder="••••••••" />
-            </FormField>
-          </div>
-        </SettingSection>
+              </FormField>
+            </div>
+          </SettingSection>
+        )}
 
         {/* Appearance */}
         <SettingSection icon={Palette} title="Appearance">

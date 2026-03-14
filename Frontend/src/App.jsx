@@ -11,7 +11,7 @@ import Patients     from './pages/Patients'
 import Appointments from './pages/Appointments'
 import Records      from './pages/Records'
 import Settings     from './pages/Settings'
-import LiveMonitor  from './pages/LiveMonitor'
+
 import Login        from './pages/Login'
 import Signup       from './pages/Signup'
 
@@ -69,7 +69,7 @@ export default function App() {
             <Route path="appointments"      element={<Appointments />}   />
             <Route path="records"           element={<Records />}        />
             <Route path="settings"          element={<Settings />}       />
-            <Route path="live-monitor"      element={<LiveMonitor />}    />
+
 
             {/* Doctor */}
             <Route path="add-visit"         element={<AddVisit />}       />

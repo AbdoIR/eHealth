@@ -1,28 +1,45 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { getContract } from '../blockchain/client'
+import { useAuth } from '../context/AuthContext'
 
-const STORAGE_KEY = 'hc_patients_v2'
-
-function loadCachedPatients() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
-  }
-}
+const BASE_STORAGE_KEY = 'hc_patients_v2'
 
 export function usePatients() {
-  const [patients, setPatients] = useState(loadCachedPatients)
+  const { user } = useAuth()
+  
+  // Create a unique storage key for this specific doctor
+  const storageKey = user?.address ? `${BASE_STORAGE_KEY}_${user.address.toLowerCase()}` : BASE_STORAGE_KEY
+
+  // Initialize state lazily based on the current storage key
+  const [patients, setPatients] = useState(() => {
+    try {
+      const raw = localStorage.getItem(storageKey)
+      return raw ? JSON.parse(raw) : []
+    } catch {
+      return []
+    }
+  })
+
+  // Whenever the user changes (e.g. login/logout with different metamask accounts),
+  // reload the patient list from that user's specific cache.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(storageKey)
+      setPatients(raw ? JSON.parse(raw) : [])
+    } catch {
+      setPatients([])
+    }
+  }, [storageKey])
 
   const saveToCache = (updated) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+    localStorage.setItem(storageKey, JSON.stringify(updated))
   }
 
   const addPatientByAddress = useCallback(async (address, metadata = {}) => {
     try {
       const contract = await getContract();
-      const isRegistered = await contract.isPatient(address);
+      const isPatientObj = await contract.patients(address);
+      const isRegistered = isPatientObj.isRegistered;
       
       if (!isRegistered) {
         return { ok: false, message: "This address is not registered as a patient on the blockchain." };
@@ -35,21 +52,33 @@ export function usePatients() {
         return { ok: false, message: "This patient is already in your directory." };
       }
 
-      // ENFORCEMENT: Trigger on-chain consent request
-      const { requestPatientConsent } = await import('../blockchain/consent');
-      await requestPatientConsent(address);
+      // ENFORCEMENT: Trigger on-chain consent request if not already requested
+      const { checkConsentState, requestPatientConsent } = await import('../blockchain/consent');
+      const { getProvider } = await import('../blockchain/client');
+      
+      const provider = getProvider();
+      const signer = await provider.getSigner();
+      const doctorAddress = await signer.getAddress();
+      
+      const { isGranted, isPending } = await checkConsentState(address, doctorAddress);
+      
+      if (!isGranted && !isPending) {
+        await requestPatientConsent(address);
+      }
+
+      const profile = await contract.getPatientProfile(address);
 
       const newPatient = {
         id: normalizedAddr,
-        name: metadata.name || ("Patient " + address.slice(0, 6)),
+        name: profile.name || metadata.name || ("Patient " + address.slice(0, 6)),
         status: metadata.status || "Active",
         primaryCondition: metadata.condition || "Clinical Record",
         gender: metadata.gender || "Unknown",
         dob: metadata.dob || "Unknown",
-        bloodType: "Unknown",
-        phone: "N/A",
-        email: address.slice(0, 8) + "@eth.mail",
-        consentStatus: 'pending' // Locally track that we just requested it
+        bloodType: profile.bloodType || "Unknown",
+        phone: profile.phone || "N/A",
+        email: profile.email || (address.slice(0, 8) + "@eth.mail"),
+        consentStatus: isGranted ? 'granted' : 'pending'
       };
 
       setPatients(prev => {
@@ -64,7 +93,7 @@ export function usePatients() {
       const msg = error.reason || error.message || "Failed to broadcast consent request to blockchain.";
       return { ok: false, message: msg };
     }
-  }, [patients]);
+  }, [patients, storageKey]);
 
   const searchPatients = useCallback(async (query) => {
     if (!query.trim()) return patients;
@@ -79,13 +108,17 @@ export function usePatients() {
 
        // Otherwise check on-chain
        const contract = await getContract();
-       const isRegistered = await contract.isPatient(q);
-       if (isRegistered) {
+       const isPatientObj = await contract.patients(q);
+       if (isPatientObj.isRegistered) {
+          const profile = await contract.getPatientProfile(q);
           return [{
             id: q,
-            name: "New Discovery (" + q.slice(0, 6) + ")",
+            name: profile.name || ("New Discovery (" + q.slice(0, 6) + ")"),
             status: "Active",
-            primaryCondition: "On-Chain Record"
+            primaryCondition: "On-Chain Record",
+            bloodType: profile.bloodType,
+            phone: profile.phone,
+            email: profile.email
           }];
        }
        return [];
@@ -108,7 +141,44 @@ export function usePatients() {
       saveToCache(updated);
       return updated;
     });
-  }, []);
+  }, [storageKey]);
 
-  return { patients, searchPatients, addPatient: addPatientByAddress, removePatient, getPatientById }
+  // Sync offline localStorage states (pending) with actual on-chain truth
+  const refreshConsents = useCallback(async () => {
+    if (!patients.length || !user?.address) return;
+    
+    let hasChanges = false;
+    const { checkConsentState } = await import('../blockchain/consent');
+    const { getProvider } = await import('../blockchain/client');
+    const signer = await getProvider().getSigner();
+    const doctorAddress = await signer.getAddress();
+
+    const updatedPatients = await Promise.all(patients.map(async (p) => {
+       // Only perform network hits for those still pending (or we could always check if revoked)
+       const { isGranted, isPending } = await checkConsentState(p.id, doctorAddress);
+       
+       let newStatus = p.consentStatus;
+       if (isGranted) newStatus = 'granted';
+       else if (isPending) newStatus = 'pending';
+       else newStatus = 'revoked'; // If it's neither, they revoked or it failed
+
+       if (newStatus !== p.consentStatus) {
+           hasChanges = true;
+           return { ...p, consentStatus: newStatus };
+       }
+       return p;
+    }));
+
+    if (hasChanges) {
+        setPatients(updatedPatients);
+        saveToCache(updatedPatients);
+    }
+  }, [patients, user, storageKey]);
+
+  // Run a quick background refresh when the hook mounts
+  useEffect(() => {
+     refreshConsents();
+  }, [user?.address]); // Dependency on login
+
+  return { patients, searchPatients, addPatient: addPatientByAddress, removePatient, getPatientById, refreshConsents }
 }

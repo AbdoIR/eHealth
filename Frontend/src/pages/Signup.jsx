@@ -10,6 +10,17 @@ export default function Signup() {
 
   const [role, setRole] = useState('patient')
   const [doctorAddress, setDoctorAddress] = useState('')
+  const [name, setName] = useState('')
+  const [bloodType, setBloodType] = useState('')
+  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
+  
+  // New clinic fields
+  const [clinic, setClinic] = useState('')
+  const [timezone, setTimezone] = useState('America/New_York')
+  const [workingHoursStart, setWorkingHoursStart] = useState('08:00')
+  const [workingHoursEnd, setWorkingHoursEnd] = useState('18:00')
+
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,7 +30,18 @@ export default function Signup() {
     setSuccess('')
     setLoading(true)
     
-    const result = await register({ userType: role, doctorAddress })
+    const result = await register({ 
+        userType: role, 
+        doctorAddress, 
+        name, 
+        bloodType, 
+        phone, 
+        email,
+        clinic,
+        timezone,
+        workingHoursStart,
+        workingHoursEnd
+    })
     
     setLoading(false)
     if (result.ok) {
@@ -60,7 +82,7 @@ export default function Signup() {
             )}
             
             {success && (
-              <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-sm px-4 py-3 rounded-lg mb-5">
+              <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:emerald-800 text-emerald-700 dark:text-emerald-300 text-sm px-4 py-3 rounded-lg mb-5">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 {success}
               </div>
@@ -79,8 +101,17 @@ export default function Signup() {
                </RadioGroup>
             </div>
 
-            {role === 'doctor' && (
-              <div className="mb-6">
+            {role === 'doctor' ? (
+              <div className="mb-6 flex flex-col gap-6">
+                 <Input
+                   label="Doctor's Name"
+                   value={name}
+                   onValueChange={setName}
+                   placeholder="e.g. Dr. Sarah Jenkins"
+                   variant="bordered"
+                   size="sm"
+                   labelPlacement="outside"
+                 />
                  <Input
                    label="Doctor's Ethereum Address"
                    value={doctorAddress}
@@ -90,7 +121,77 @@ export default function Signup() {
                    size="sm"
                    labelPlacement="outside"
                  />
+                 <Input
+                   label="Clinic Name"
+                   value={clinic}
+                   onValueChange={setClinic}
+                   placeholder="e.g. City General Hospital"
+                   variant="bordered"
+                   size="sm"
+                   labelPlacement="outside"
+                 />
+                 <Input
+                   label="Timezone"
+                   value={timezone}
+                   onValueChange={setTimezone}
+                   placeholder="e.g. America/New_York"
+                   variant="bordered"
+                   size="sm"
+                   labelPlacement="outside"
+                 />
+                 <div className="grid grid-cols-2 gap-4">
+                     <Input
+                       label="Shift Start"
+                       type="time"
+                       value={workingHoursStart}
+                       onValueChange={setWorkingHoursStart}
+                       variant="bordered"
+                       size="sm"
+                       labelPlacement="outside"
+                     />
+                     <Input
+                       label="Shift End"
+                       type="time"
+                       value={workingHoursEnd}
+                       onValueChange={setWorkingHoursEnd}
+                       variant="bordered"
+                       size="sm"
+                       labelPlacement="outside"
+                     />
+                 </div>
                  <p className="text-xs text-clinical-600 mt-2 font-medium">Only the clinic admin (contract owner) can perform this action.</p>
+              </div>
+            ) : (
+              <div className="mb-6 flex flex-col gap-6">
+                 <Input
+                   label="Full Name"
+                   value={name}
+                   onValueChange={setName}
+                   placeholder="e.g. John Doe"
+                   variant="bordered"
+                   size="sm"
+                   labelPlacement="outside"
+                 />
+                 <div className="grid grid-cols-2 gap-4">
+                   <Input
+                     label="Blood Type"
+                     value={bloodType}
+                     onValueChange={setBloodType}
+                     placeholder="e.g. O+"
+                     variant="bordered"
+                     size="sm"
+                     labelPlacement="outside"
+                   />
+                   <Input
+                     label="Phone Number"
+                     value={phone}
+                     onValueChange={setPhone}
+                     placeholder="(555) 123-4567"
+                     variant="bordered"
+                     size="sm"
+                     labelPlacement="outside"
+                   />
+                 </div>
               </div>
             )}
 

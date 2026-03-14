@@ -65,6 +65,7 @@ export default function AddVisitForm({
               onSelectionChange={(keys) => setField('specialty', [...keys][0] || '')}
               isInvalid={!!errors.specialty}
               errorMessage={errors.specialty}
+              disableAnimation
             >
               {specialties.map((s) => <SelectItem key={s} className={selectItemClassName}>{s}</SelectItem>)}
             </Select>
@@ -80,6 +81,7 @@ export default function AddVisitForm({
               onSelectionChange={(keys) => setField('visitType', [...keys][0] || '')}
               isInvalid={!!errors.visitType}
               errorMessage={errors.visitType}
+              disableAnimation
             >
               {visitTypes.map((t) => <SelectItem key={t} className={selectItemClassName}>{t}</SelectItem>)}
             </Select>

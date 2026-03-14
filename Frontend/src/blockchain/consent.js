@@ -28,17 +28,24 @@ export async function fetchPendingRequests(patientAddress) {
      const events = await contract.queryFilter(filter, 0, 'latest')
 
      // We only want the unique latest requests that are STILL pending
-     const pendingDoctors = []
+     const pendingDoctorsMap = new Map() // Use map for distinct addresses
+     
      for (const event of events) {
-         const doctorAddress = event.args.doctor
+         const doctorAddress = event.args.doctor.toLowerCase() // normalize
+         
          // Check if it's still pending (not granted and not refused yet)
          const isPending = await contract.pendingConsent(patientAddress, doctorAddress)
-         if (isPending && !pendingDoctors.includes(doctorAddress)) {
-             pendingDoctors.push(doctorAddress)
+         if (isPending && !pendingDoctorsMap.has(doctorAddress)) {
+             try {
+                const docName = await contract.getDoctorProfile(doctorAddress);
+                pendingDoctorsMap.set(doctorAddress, { address: event.args.doctor, name: docName })
+             } catch (e) {
+                pendingDoctorsMap.set(doctorAddress, { address: event.args.doctor, name: "Doctor " + doctorAddress.slice(0, 6) })
+             }
          }
      }
 
-     return pendingDoctors
+     return Array.from(pendingDoctorsMap.values())
   } catch (error) {
      console.error("Failed to fetch pending requests:", error)
      return []
@@ -65,6 +72,7 @@ export async function revokeDoctorConsent(doctorAddress) {
   await tx.wait()
   return tx
 }
+
 export async function fetchAuthorizedDoctors(patientAddress) {
   try {
     const contract = await getContract()
@@ -76,11 +84,30 @@ export async function fetchAuthorizedDoctors(patientAddress) {
     const revokeFilter = contract.filters.ConsentRevoked(patientAddress)
     const revokeEvents = await contract.queryFilter(revokeFilter, 0, 'latest')
 
-    const authorizedSet = new Set()
-    for (const e of grantEvents) authorizedSet.add(e.args.doctor)
-    for (const e of revokeEvents) authorizedSet.delete(e.args.doctor)
+    const authorizedMap = new Map() // track by normalized lowercase address
+    
+    // Add all granted
+    for (const e of grantEvents) {
+        const addr = e.args.doctor.toLowerCase()
+        if (!authorizedMap.has(addr)) {
+            try {
+               const docName = await contract.getDoctorProfile(e.args.doctor);
+               authorizedMap.set(addr, { address: e.args.doctor, name: docName })
+            } catch (err) {
+               authorizedMap.set(addr, { address: e.args.doctor, name: "Doctor " + addr.slice(0, 6) })
+            }
+        }
+    }
+    
+    // Remove any revoked
+    for (const e of revokeEvents) {
+        const addr = e.args.doctor.toLowerCase()
+        // If a revocation event happened, we remove them from the authorized set.
+        // Even if there were multiple grants for the same doctor, a revocation revokes all.
+        authorizedMap.delete(addr) 
+    }
 
-    return Array.from(authorizedSet)
+    return Array.from(authorizedMap.values())
   } catch (error) {
     console.error("Failed to fetch authorized doctors:", error)
     return []

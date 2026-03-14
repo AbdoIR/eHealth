@@ -51,7 +51,7 @@ export default function MyHistory() {
   const handleGrant = async (doctorAddr) => {
       try {
          await grantDoctorConsent(doctorAddr)
-         setPendingRequests(prev => prev.filter(r => r !== doctorAddr))
+         setPendingRequests(prev => prev.filter(r => r.address.toLowerCase() !== doctorAddr.toLowerCase()))
       } catch (err) {
          console.error("Grant failed:", err)
       }
@@ -60,7 +60,7 @@ export default function MyHistory() {
   const handleRefuse = async (doctorAddr) => {
       try {
          await refuseDoctorConsent(doctorAddr)
-         setPendingRequests(prev => prev.filter(r => r !== doctorAddr))
+         setPendingRequests(prev => prev.filter(r => r.address.toLowerCase() !== doctorAddr.toLowerCase()))
       } catch (err) {
          console.error("Refuse failed:", err)
       }
@@ -105,22 +105,22 @@ export default function MyHistory() {
                  <h3 className="text-sm font-semibold text-orange-800 dark:text-orange-200">Pending Consent Requests</h3>
                </div>
                <div className="space-y-3">
-                  {pendingRequests.map(doctorAddr => (
-                     <div key={doctorAddr} className="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-slate-800 p-3 rounded-lg border border-orange-100 dark:border-orange-900/40 gap-3">
-                        <div>
-                           <p className="text-sm font-medium text-slate-800 dark:text-slate-100">Doctor Requesting Access</p>
-                           <p className="text-xs font-mono text-slate-500 mt-0.5">{doctorAddr}</p>
-                        </div>
-                        <div className="flex gap-2">
-                           <Button size="sm" color="danger" variant="flat" onPress={() => handleRefuse(doctorAddr)}>
-                             <X size={16} /> Decline
-                           </Button>
-                           <Button size="sm" color="success" onPress={() => handleGrant(doctorAddr)}>
-                             <Check size={16} /> Grant Access
-                           </Button>
-                        </div>
-                     </div>
-                  ))}
+                   {pendingRequests.map(request => (
+                      <div key={request.address} className="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-slate-800 p-3 rounded-lg border border-orange-100 dark:border-orange-900/40 gap-3">
+                         <div>
+                            <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{request.name}</p>
+                            <p className="text-xs font-mono text-slate-500 mt-0.5">{request.address}</p>
+                         </div>
+                         <div className="flex gap-2">
+                            <Button size="sm" color="danger" variant="flat" onPress={() => handleRefuse(request.address)}>
+                              <X size={16} /> Decline
+                            </Button>
+                            <Button size="sm" color="success" onPress={() => handleGrant(request.address)}>
+                              <Check size={16} /> Grant Access
+                            </Button>
+                         </div>
+                      </div>
+                   ))}
                </div>
             </div>
          </Card>
