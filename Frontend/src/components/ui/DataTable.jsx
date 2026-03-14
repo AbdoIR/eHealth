@@ -31,7 +31,7 @@ export default function DataTable({
       classNames={{
         wrapper: "shadow-none border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl overflow-hidden",
         th: "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold z-10",
-        td: "py-3 border-b border-slate-100 dark:border-slate-800 last:border-0",
+        td: "py-3 border-b border-slate-100 dark:border-slate-800",
       }}
       removeWrapper={false}
       {...props}
