@@ -4,13 +4,6 @@ pragma solidity ^0.8.0;
 contract HealthRecords {
     address public immutable owner;
 
-    struct Visit {
-        uint256 id;
-        uint256 timestamp;
-        address doctor;     // Doctor who added it
-        bytes encryptedData; // Encrypted IPFS CID or symmetric encrypted blob
-    }
-
     struct Doctor {
         bool isRegistered;
         string name;
@@ -31,7 +24,6 @@ contract HealthRecords {
     // State Variables
     mapping(address => Patient) public patients;
     mapping(address => Doctor) public doctors;
-    mapping(address => Visit[]) private patientHistory;
 
     // Consent mappings: mapping(patient => mapping(doctor => state))
     mapping(address => mapping(address => bool)) public patientConsent;
@@ -45,7 +37,7 @@ contract HealthRecords {
     event PatientRegistered(address indexed patient, string name);
     event DoctorAdded(address indexed doctor, string name, string clinic);
     event DoctorRemoved(address indexed doctor);
-    event VisitAdded(address indexed patient, address indexed doctor, uint256 visitId);
+    event VisitAdded(address indexed patient, address indexed doctor, uint256 timestamp, bytes encryptedData);
 
     // Modifiers
     modifier onlyOwner() {
@@ -173,41 +165,7 @@ contract HealthRecords {
         require(patientConsent[_patient][msg.sender], "Patient has not granted consent to this doctor.");
         require(_encryptedData.length > 0, "Encrypted data cannot be empty.");
 
-        Visit memory newVisit = Visit({
-            id: patientHistory[_patient].length,
-            timestamp: block.timestamp,
-            doctor: msg.sender,
-            encryptedData: _encryptedData
-        });
-
-        patientHistory[_patient].push(newVisit);
-        emit VisitAdded(_patient, msg.sender, block.timestamp);
+        emit VisitAdded(_patient, msg.sender, block.timestamp, _encryptedData);
     }
 
-    function getHistory(address _patient, uint256 _offset, uint256 _limit) public view returns (Visit[] memory) {
-        require(msg.sender == _patient || patientConsent[_patient][msg.sender], "Not authorized to view this history.");
-
-        Visit[] storage allVisits = patientHistory[_patient];
-
-        if (_offset >= allVisits.length) {
-            return new Visit[](0);
-        }
-
-        uint256 end = _offset + _limit;
-        if (end > allVisits.length) {
-            end = allVisits.length;
-        }
-
-        uint256 resultLength = end - _offset;
-        Visit[] memory result = new Visit[](resultLength);
-        for (uint256 i = 0; i < resultLength; i++) {
-            result[i] = allVisits[_offset + i];
-        }
-        return result;
-    }
-
-    function getVisitCount(address _patient) public view returns (uint256) {
-        require(msg.sender == _patient || patientConsent[_patient][msg.sender], "Not authorized to view this history.");
-        return patientHistory[_patient].length;
-    }
 }
