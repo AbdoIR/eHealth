@@ -38,7 +38,7 @@ export default function VisitDetailModal({ visit, onClose }) {
               </span>
               <div className="flex flex-col gap-0.5">
                 <span className="text-lg font-semibold text-slate-900 dark:text-slate-50">{visit.visitType} - {visit.specialty}</span>
-                <span className="text-sm text-slate-500 font-normal dark:text-slate-400">{visit.id} · {visit.date}</span>
+                <span className="text-sm text-slate-500 font-normal dark:text-slate-400">{visit.doctorName || visit.doctor} · {visit.date}</span>
               </div>
             </ModalHeader>
             <ModalBody className={`${modalBodyClass} pb-6`}>
@@ -46,7 +46,7 @@ export default function VisitDetailModal({ visit, onClose }) {
                 {/* Patient & Doctor grid */}
                 <div className={`${modalSectionClass} grid grid-cols-2 gap-4`}>
                   <Detail icon={User}        label="Patient"          value={visit.patientName} />
-                  <Detail icon={Stethoscope} label="Attending Doctor" value={visit.doctor} />
+                  <Detail icon={Stethoscope} label="Attending Doctor" value={visit.doctorName || visit.doctor} />
                   <Detail icon={Calendar}    label="Date"             value={visit.date} />
                   <Detail icon={FileText}    label="Specialty"        value={visit.specialty} />
                 </div>
@@ -76,19 +76,6 @@ export default function VisitDetailModal({ visit, onClose }) {
                     color="success"
                   />
                 )}
-
-                <Divider />
-
-                {/* Blockchain provenance */}
-                <div className={modalSectionClass}>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-1.5">
-                    <Hash size={11} /> Blockchain Provenance
-                  </p>
-                  <div className="space-y-1.5">
-                    <ProvRow label="Transaction Hash" value={visit.blockchainTxHash} mono />
-                    <ProvRow label="Block Number"     value={`#${visit.blockNumber?.toLocaleString()}`} />
-                  </div>
-                </div>
               </div>
             </ModalBody>
           </>
