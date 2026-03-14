@@ -1,2 +1,4 @@
 LICENSE
 Blockchain/build
+Blockchain/.env
+Blockchain/node_modules
