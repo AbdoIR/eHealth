@@ -56,6 +56,7 @@ export function useVisits() {
           }
 
           return {
+            id: `${v.transactionHash}-${v.index}`,
             ...data,
             doctor: v.args.doctor,
             doctorName: doctorCache[docAddr],
