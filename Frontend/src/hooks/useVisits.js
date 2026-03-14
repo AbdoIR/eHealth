@@ -31,33 +31,36 @@ export function useVisits() {
       const contract = await getContract(true);
       const keyHex = await getEncryptionKey(patientAddress);
       
-      const count = await contract.getVisitCount(patientAddress);
-      const rawVisits = await contract.getHistory(patientAddress, 0, count);
+      const filter = contract.filters.VisitAdded(patientAddress);
+      const events = await contract.queryFilter(filter, 0, "latest");
+      
+      // Sort events newest first based on timestamp
+      const sortedEvents = events.sort((a, b) => Number(b.args.timestamp) - Number(a.args.timestamp));
 
       // Cache for doctor names to avoid redundant calls
       const doctorCache = {};
 
-      const decryptedVisits = await Promise.all(rawVisits.map(async (v) => {
+      const decryptedVisits = await Promise.all(sortedEvents.map(async (v) => {
         try {
-          const decryptedJson = await decryptData(v.encryptedData, keyHex);
+          const decryptedJson = await decryptData(v.args.encryptedData, keyHex);
           const data = JSON.parse(decryptedJson);
 
           // Fetch doctor name if not in cache
-          const docAddr = v.doctor.toLowerCase();
+          const docAddr = v.args.doctor.toLowerCase();
           if (!doctorCache[docAddr]) {
             try {
-              doctorCache[docAddr] = await contract.getDoctorProfile(v.doctor);
+              doctorCache[docAddr] = await contract.getDoctorProfile(v.args.doctor);
             } catch (e) {
-              doctorCache[docAddr] = `Dr. ${v.doctor.slice(0, 6)}`;
+              doctorCache[docAddr] = `Dr. ${v.args.doctor.slice(0, 6)}`;
             }
           }
 
           return {
             ...data,
-            doctor: v.doctor,
+            doctor: v.args.doctor,
             doctorName: doctorCache[docAddr],
-            timestamp: Number(v.timestamp) * 1000,
-            date: new Date(Number(v.timestamp) * 1000).toISOString().split('T')[0]
+            timestamp: Number(v.args.timestamp) * 1000,
+            date: new Date(Number(v.args.timestamp) * 1000).toISOString().split('T')[0]
           };
         } catch (e) {
           console.warn("Failed to decrypt a visit - likely wrong key/signature:", e);

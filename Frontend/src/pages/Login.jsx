@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Stethoscope, AlertCircle } from 'lucide-react'
-import { Button, Card, CardBody } from '@heroui/react'
+import { Stethoscope, AlertCircle, Server, Globe } from 'lucide-react'
+import { Button, Card, CardBody, Tabs, Tab } from '@heroui/react'
 
 export default function Login() {
-  const { login } = useAuth()
+  const { login, targetNetwork, setTargetNetwork } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -44,7 +44,43 @@ export default function Login() {
         <Card shadow="sm" className="border border-slate-200 dark:border-slate-700">
           <CardBody className="p-8">
             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-1">Access your account</h2>
-            <p className="text-sm text-slate-400 mb-6">Connect your Web3 wallet to continue.</p>
+            <p className="text-sm text-slate-400 mb-6">Choose your network and connect your wallet.</p>
+
+            <div className="mb-8">
+              <Tabs 
+                fullWidth 
+                aria-label="Network selection" 
+                selectedKey={targetNetwork}
+                onSelectionChange={setTargetNetwork}
+                color="primary"
+                variant="solid"
+                classNames={{
+                  tabList: "bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-700",
+                  cursor: "bg-white dark:bg-slate-700 shadow-sm rounded-lg",
+                  tab: "h-9",
+                  tabContent: "group-data-[selected=true]:text-clinical-700 dark:group-data-[selected=true]:text-clinical-400 font-medium"
+                }}
+              >
+                <Tab
+                  key="ganache"
+                  title={
+                    <div className="flex items-center space-x-2">
+                      <Server size={14}/>
+                      <span>Ganache</span>
+                    </div>
+                  }
+                />
+                <Tab
+                  key="sepolia"
+                  title={
+                    <div className="flex items-center space-x-2">
+                      <Globe size={14}/>
+                      <span>Sepolia</span>
+                    </div>
+                  }
+                />
+              </Tabs>
+            </div>
 
             {error && (
               <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm px-4 py-3 rounded-lg mb-5">

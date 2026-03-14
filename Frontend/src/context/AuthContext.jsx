@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { getContract, getProvider } from '../blockchain/client'
+import { getContract, getProvider, requestSwitchToSepolia, requestSwitchToGanache } from '../blockchain/client'
 import { deriveKey as blockchainDeriveKey } from '../blockchain/encryption'
 
 const USER_STORAGE_KEY = 'hc_user'         // currently signed-in user
 const ENC_KEY_PREFIX = 'hc_ekey_'          // persistent encryption keys
+const NETWORK_STORAGE_KEY = 'hc_network'   // preferred network
 
 function loadJSON(key, fallback) {
   try {
@@ -22,10 +23,16 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => loadJSON(USER_STORAGE_KEY, null))
+  const [targetNetwork, setTargetNetwork] = useState(() => localStorage.getItem(NETWORK_STORAGE_KEY) || 'sepolia')
   const [encryptionKey, setEncryptionKey] = useState(() => {
     if (user?.address) return localStorage.getItem(ENC_KEY_PREFIX + user.address.toLowerCase())
     return null
   })
+
+  // Persist network preference
+  useEffect(() => {
+    localStorage.setItem(NETWORK_STORAGE_KEY, targetNetwork)
+  }, [targetNetwork])
 
   // Utility to handle account changes in MetaMask
   useEffect(() => {
@@ -70,6 +77,18 @@ export function AuthProvider({ children }) {
 
     try {
       const provider = getProvider()
+      const network = await provider.getNetwork()
+      const chainId = network.chainId.toString()
+
+      // Check if we need to switch network before logging in
+      if (targetNetwork === 'sepolia' && chainId !== '11155111') {
+        await requestSwitchToSepolia()
+        return { ok: false, message: 'Switching to Sepolia... Please try connecting again.' }
+      } else if (targetNetwork === 'ganache' && chainId !== '1337') {
+        await requestSwitchToGanache()
+        return { ok: false, message: 'Switching to Ganache... Please try connecting again.' }
+      }
+
       const accounts = await provider.send("eth_requestAccounts", [])
       const address = accounts[0].toLowerCase()
 
@@ -240,7 +259,16 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, getEncryptionKey, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      register, 
+      logout, 
+      getEncryptionKey, 
+      isAuthenticated: !!user,
+      targetNetwork,
+      setTargetNetwork
+    }}>
       {children}
     </AuthContext.Provider>
   )
