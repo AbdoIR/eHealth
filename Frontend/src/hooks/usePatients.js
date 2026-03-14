@@ -2,13 +2,16 @@ import { useState, useCallback, useEffect } from 'react'
 import { getContract } from '../blockchain/client'
 import { useAuth } from '../context/AuthContext'
 
-const BASE_STORAGE_KEY = 'hc_patients_v2'
+const BASE_STORAGE_KEY = 'hc_patients_v3'
 
 export function usePatients() {
   const { user } = useAuth()
   
-  // Create a unique storage key for this specific doctor
-  const storageKey = user?.address ? `${BASE_STORAGE_KEY}_${user.address.toLowerCase()}` : BASE_STORAGE_KEY
+  // Create a unique storage key for this specific doctor AND network
+  const [chainId, setChainId] = useState(() => window.ethereum?.chainId || 'unknown')
+  const storageKey = user?.address 
+    ? `${BASE_STORAGE_KEY}_${chainId}_${user.address.toLowerCase()}` 
+    : BASE_STORAGE_KEY
 
   // Initialize state lazily based on the current storage key
   const [patients, setPatients] = useState(() => {
