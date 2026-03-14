@@ -11,7 +11,7 @@ export function useVisits() {
   const addVisit = useCallback(async (patientAddress, visitObject) => {
     try {
       const contract = await getContract(true);
-      const keyHex = await getEncryptionKey();
+      const keyHex = await getEncryptionKey(patientAddress);
       
       const json = JSON.stringify(visitObject);
       const encrypted = await encryptData(json, keyHex);
@@ -29,7 +29,7 @@ export function useVisits() {
   const getVisitsByPatient = useCallback(async (patientAddress) => {
     try {
       const contract = await getContract(true);
-      const keyHex = await getEncryptionKey();
+      const keyHex = await getEncryptionKey(patientAddress);
       
       const count = await contract.getVisitCount(patientAddress);
       const rawVisits = await contract.getHistory(patientAddress, 0, count);

@@ -203,7 +203,13 @@ export function AuthProvider({ children }) {
   /**
    * Returns the cached encryption key or requests a signature if not present.
    */
-  async function getEncryptionKey() {
+  async function getEncryptionKey(patientAddress = null) {
+    // If a patient address is provided, we return the deterministic key for that patient
+    if (patientAddress) {
+      const { derivePatientKey } = await import('../blockchain/encryption');
+      return derivePatientKey(patientAddress);
+    }
+
     if (encryptionKey) return encryptionKey;
 
     try {

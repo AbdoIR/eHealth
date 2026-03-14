@@ -2,6 +2,9 @@ import { ethers } from 'ethers';
 
 const ENCRYPTION_MESSAGE = "Authorize MedDesk to access and encrypt your medical records. This signature will be used to derive your private encryption key.";
 
+// A deterministic salt used to derive per-patient keys.
+const SYSTEM_SALT = "MedDesk_Shared_Clinical_Space_v1";
+
 /**
  * Derives a 256-bit symmetric key from a user's signature.
  * @param {Signer} signer - THE PATIENT'S signer (must be the patient to access their records).
@@ -10,6 +13,15 @@ export async function deriveKey(signer) {
   const signature = await signer.signMessage(ENCRYPTION_MESSAGE);
   const keyHex = ethers.keccak256(signature); // 32 bytes (256 bits)
   return keyHex;
+}
+
+/**
+ * Derives a deterministic symmetric key for a specific patient's records.
+ * Allows any authorized party (Doctor or Patient) to access the same encrypted space.
+ */
+export function derivePatientKey(patientAddress) {
+  const input = patientAddress.toLowerCase() + SYSTEM_SALT;
+  return ethers.keccak256(ethers.toUtf8Bytes(input));
 }
 
 /**
