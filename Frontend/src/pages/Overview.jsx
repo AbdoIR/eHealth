@@ -14,13 +14,17 @@ const VITAL_STREAM = [
   { ward: 'Ward B-12', metric: 'SpO2', value: '97%', status: 'stable', updatedAt: '1 min ago' },
   { ward: 'ER-03', metric: 'Blood Pressure', value: '148/96', status: 'warning', updatedAt: '40 sec ago' },
   { ward: 'Ward C-05', metric: 'Temperature', value: '38.1 C', status: 'warning', updatedAt: '2 min ago' },
+  { ward: 'NICU-2', metric: 'Respiration', value: '42 br/m', status: 'stable', updatedAt: 'Just now' },
+  { ward: 'PACU-A', metric: 'MAP', value: '72 mmHg', status: 'stable', updatedAt: '3 min ago' },
 ]
 
 /** Simulated open alerts */
 const ALERTS = [
-  { id: 'AL-1001', text: 'Patient P-1005 requires immediate review', severity: 'critical' },
-  { id: 'AL-1002', text: 'Lab delta detected for Patient P-1002', severity: 'warning' },
-  { id: 'AL-1003', text: 'Vitals stream resumed for Device D-201', severity: 'info' },
+  { id: 'AL-1001', text: 'Patient P-1005 requires immediate review', severity: 'critical', time: '5m ago' },
+  { id: 'AL-1002', text: 'Lab delta detected for Patient P-1002', severity: 'warning', time: '12m ago' },
+  { id: 'AL-1003', text: 'Vitals stream resumed for Device D-201', severity: 'info', time: '1h ago' },
+  { id: 'AL-1004', text: 'Consent granted: Dr. Miller to P-1089', severity: 'info', time: '2h ago' },
+  { id: 'AL-1005', text: 'Daily audit report generated', severity: 'info', time: '4h ago' },
 ]
 
 const STATUS_STYLE = {
@@ -150,10 +154,15 @@ export default function Overview() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Vitals Stream */}
         <Card className="lg:col-span-2">
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2">
-            <HeartPulse size={15} className="text-clinical-500" />
-            Live Vitals Stream (Simulation)
-          </h2>
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+              <HeartPulse size={15} className="text-clinical-500" />
+              Live Vitals Stream
+            </h2>
+            <Chip size="sm" variant="dot" color="warning" className="text-[10px] uppercase font-bold text-orange-400 border-orange-100">
+              Mock Data
+            </Chip>
+          </div>
           <ul className="space-y-2">
             {VITAL_STREAM.map((item) => (
               <li
@@ -178,15 +187,23 @@ export default function Overview() {
 
         {/* Alerts / reminders */}
         <Card>
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2">
-            <AlertCircle size={15} className="text-amber-500" />
-            Alert Queue (Simulation)
-          </h2>
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+              <AlertCircle size={15} className="text-amber-500" />
+              Alert Queue
+            </h2>
+            <Chip size="sm" variant="dot" color="warning" className="text-[10px] uppercase font-bold text-orange-400 border-orange-100">
+              Mock Data
+            </Chip>
+          </div>
           <ul className="space-y-3">
             {ALERTS.map((alert) => (
               <li key={alert.id} className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2.5 bg-slate-50/50 dark:bg-slate-800/20">
-                <p className={`text-xs font-semibold ${ALERT_STYLE[alert.severity]}`}>{alert.id}</p>
-                <p className="text-sm text-slate-700 dark:text-slate-200 mt-0.5">{alert.text}</p>
+                <div className="flex justify-between items-start mb-0.5">
+                  <p className={`text-[10px] font-bold uppercase tracking-wider ${ALERT_STYLE[alert.severity]}`}>{alert.id}</p>
+                  <p className="text-[10px] text-slate-400 font-medium">{alert.time}</p>
+                </div>
+                <p className="text-sm text-slate-700 dark:text-slate-200 leading-snug">{alert.text}</p>
               </li>
             ))}
           </ul>
