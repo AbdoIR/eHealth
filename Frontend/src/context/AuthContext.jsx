@@ -34,7 +34,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem(NETWORK_STORAGE_KEY, targetNetwork)
   }, [targetNetwork])
 
-  // Utility to handle account changes in MetaMask
+  // Utility to handle account and network changes in MetaMask
   useEffect(() => {
     if (window.ethereum) {
       const handleAccountsChanged = (accounts) => {
@@ -44,8 +44,19 @@ export function AuthProvider({ children }) {
           logout() // User switched accounts, force them to log in again
         }
       }
+
+      const handleChainChanged = () => {
+        // Standard practice: reload the page on chain change
+        window.location.reload()
+      }
+
       window.ethereum.on('accountsChanged', handleAccountsChanged)
-      return () => window.ethereum.removeListener('accountsChanged', handleAccountsChanged)
+      window.ethereum.on('chainChanged', handleChainChanged)
+      
+      return () => {
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged)
+        window.ethereum.removeListener('chainChanged', handleChainChanged)
+      }
     }
   }, [user])
 
