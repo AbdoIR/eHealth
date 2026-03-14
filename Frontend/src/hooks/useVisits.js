@@ -11,7 +11,7 @@ export function useVisits() {
   const addVisit = useCallback(async (patientAddress, visitObject) => {
     try {
       const contract = await getContract(true);
-      const keyHex = await getEncryptionKey();
+      const keyHex = await getEncryptionKey(patientAddress);
       
       const json = JSON.stringify(visitObject);
       const encrypted = await encryptData(json, keyHex);
@@ -29,24 +29,39 @@ export function useVisits() {
   const getVisitsByPatient = useCallback(async (patientAddress) => {
     try {
       const contract = await getContract(true);
-      const keyHex = await getEncryptionKey();
+      const keyHex = await getEncryptionKey(patientAddress);
       
       const count = await contract.getVisitCount(patientAddress);
       const rawVisits = await contract.getHistory(patientAddress, 0, count);
+
+      // Cache for doctor names to avoid redundant calls
+      const doctorCache = {};
 
       const decryptedVisits = await Promise.all(rawVisits.map(async (v) => {
         try {
           const decryptedJson = await decryptData(v.encryptedData, keyHex);
           const data = JSON.parse(decryptedJson);
+
+          // Fetch doctor name if not in cache
+          const docAddr = v.doctor.toLowerCase();
+          if (!doctorCache[docAddr]) {
+            try {
+              doctorCache[docAddr] = await contract.getDoctorProfile(v.doctor);
+            } catch (e) {
+              doctorCache[docAddr] = `Dr. ${v.doctor.slice(0, 6)}`;
+            }
+          }
+
           return {
             ...data,
             doctor: v.doctor,
+            doctorName: doctorCache[docAddr],
             timestamp: Number(v.timestamp) * 1000,
             date: new Date(Number(v.timestamp) * 1000).toISOString().split('T')[0]
           };
         } catch (e) {
           console.warn("Failed to decrypt a visit - likely wrong key/signature:", e);
-          return null; // Skip records we can't decrypt
+          return null;
         }
       }));
 

@@ -55,7 +55,7 @@ export default function VisitCard({ visit, showPatient = true, onView }) {
               <p className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-slate-100">{visit.patientName}</p>
             )}
             <p className="text-xs text-slate-500 mt-0.5">
-              {visit.doctor} · {visit.date}
+              {visit.doctorName || visit.doctor} · {visit.date}
             </p>
           </div>
         </div>
@@ -98,15 +98,6 @@ export default function VisitCard({ visit, showPatient = true, onView }) {
             </p>
           </div>
         )}
-      </div>
-
-      {/* ── Blockchain provenance ── */}
-      <div className="mt-3 flex items-center gap-1.5 opacity-60">
-        <Hash size={11} className="text-slate-400 shrink-0" />
-        <span className="text-[10px] font-mono text-slate-400 truncate">{abbrHash}</span>
-        <span className="text-[10px] text-slate-400 shrink-0">
-          · Block #{visit.blockNumber?.toLocaleString()}
-        </span>
       </div>
     </div>
   )

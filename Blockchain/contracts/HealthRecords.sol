@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 contract HealthRecords {
-    address public owner;
+    address public immutable owner;
 
     struct Visit {
         uint256 id;
@@ -65,6 +65,15 @@ contract HealthRecords {
 
     constructor() {
         owner = msg.sender;
+        doctors[owner] = Doctor({
+            isRegistered: true,
+            name: "Admin",
+            clinic: "Clinic Sale",
+            timezone: "Morocco/Rabat",
+            workingHoursStart: "08:00",
+            workingHoursEnd: "18:00"
+        });
+        emit DoctorAdded(owner, "Admin", "Clinic Sale");
     }
 
     // --- Identity Registration ---
