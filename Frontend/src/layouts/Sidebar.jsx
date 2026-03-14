@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Users,
   CalendarDays,
-  FolderHeart,
   Settings,
   HeartPulse,
   X,
@@ -19,7 +18,6 @@ const DOCTOR_NAV = [
   { to: '/add-visit',   icon: ClipboardPlus,   label: 'Log Visit' },
   { to: '/history',     icon: History,         label: 'Patient History' },
   { to: '/appointments',icon: CalendarDays,    label: 'Appointments' },
-  { to: '/records',     icon: FolderHeart,     label: 'Medical Records' },
   { to: '/settings',    icon: Settings,        label: 'Settings' },
 ]
 

@@ -9,7 +9,6 @@ import DashboardLayout from './layouts/DashboardLayout'
 import Overview     from './pages/Overview'
 import Patients     from './pages/Patients'
 import Appointments from './pages/Appointments'
-import Records      from './pages/Records'
 import Settings     from './pages/Settings'
 
 import Login        from './pages/Login'
@@ -67,7 +66,6 @@ export default function App() {
             <Route index                    element={<HomeRedirect />}   />
             <Route path="patients"          element={<Patients />}       />
             <Route path="appointments"      element={<Appointments />}   />
-            <Route path="records"           element={<Records />}        />
             <Route path="settings"          element={<Settings />}       />
 
 
