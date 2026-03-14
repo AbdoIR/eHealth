@@ -126,7 +126,7 @@ export default function Sidebar({ isOpen, onClose }) {
         {/* Footer — version / env badge */}
         <div className="px-5 py-4 border-t border-slate-100 dark:border-slate-700 shrink-0">
           <p className="text-[11px] text-slate-400 dark:text-slate-600">
-            MedDesk v0.1.0 &bull; Development
+            MedDesk v0.1.0
           </p>
         </div>
       </aside>
