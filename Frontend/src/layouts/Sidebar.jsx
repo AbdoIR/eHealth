@@ -17,7 +17,7 @@ const DOCTOR_NAV = [
   { to: '/patients',    icon: Users,           label: 'Patients' },
   { to: '/add-visit',   icon: ClipboardPlus,   label: 'Log Visit' },
   { to: '/history',     icon: History,         label: 'Patient History' },
-  { to: '/appointments',icon: CalendarDays,    label: 'Appointments' },
+  { to: '/appointments',icon: CalendarDays,    label: 'Appointments', disabled: true },
   { to: '/settings',    icon: Settings,        label: 'Settings' },
 ]
 
@@ -87,20 +87,40 @@ export default function Sidebar({ isOpen, onClose }) {
           <p className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-600">
             Main Menu
           </p>
-          {NAV_ITEMS.map(({ to, icon: Icon, label, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              onClick={onClose}
-              className={({ isActive }) =>
-                `sidebar-link ${isActive ? 'active' : ''}`
-              }
-            >
-              <Icon size={18} strokeWidth={1.8} aria-hidden="true" />
-              <span>{label}</span>
-            </NavLink>
-          ))}
+          {NAV_ITEMS.map(({ to, icon: Icon, label, end, disabled }) => {
+            if (disabled) {
+              return (
+                <div
+                  key={to}
+                  className="sidebar-link opacity-50 cursor-not-allowed pointer-events-none grayscale flex items-center justify-between"
+                  title="Coming Soon"
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon size={18} strokeWidth={1.8} aria-hidden="true" />
+                    <span>{label}</span>
+                  </div>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold uppercase tracking-tighter">
+                    Soon
+                  </span>
+                </div>
+              )
+            }
+
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `sidebar-link ${isActive ? 'active' : ''}`
+                }
+              >
+                <Icon size={18} strokeWidth={1.8} aria-hidden="true" />
+                <span>{label}</span>
+              </NavLink>
+            )
+          })}
         </nav>
 
         {/* Footer — version / env badge */}
