@@ -14,7 +14,8 @@ import {
 } from '../../blockchain/consent'
 
 const COLUMNS = [
-  { key: 'address', label: 'Doctor Address' },
+  { key: 'name', label: 'Doctor Name' },
+  { key: 'address', label: 'Ethereum Address' },
   { key: 'status',  label: 'Status' },
   { key: 'actions', label: 'Actions' },
 ]
@@ -33,7 +34,8 @@ export default function MyDoctors() {
         fetchAuthorizedDoctors(user.address),
         fetchPendingRequests(user.address)
       ])
-      setDoctors(auth.map(addr => ({ id: addr, address: addr, status: 'Authorized' })))
+      // Map the `{ address, name }` objects to include a status
+      setDoctors(auth.map(doc => ({ id: doc.address, address: doc.address, name: doc.name, status: 'Authorized' })))
       setPending(pend)
     } catch (err) {
       console.error("Failed to load doctors:", err)
@@ -92,22 +94,22 @@ export default function MyDoctors() {
               </h3>
             </div>
             <div className="space-y-3">
-              {pending.map(addr => (
-                <div key={addr} className="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-slate-800 p-4 rounded-xl border border-orange-100 dark:border-orange-900/40 gap-4">
+              {pending.map(doc => (
+                <div key={doc.address} className="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-slate-800 p-4 rounded-xl border border-orange-100 dark:border-orange-900/40 gap-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center shrink-0">
                       <ShieldAlert size={18} className="text-orange-600 dark:text-orange-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Provider Requesting Access</p>
-                      <p className="text-xs font-mono text-slate-500 mt-0.5">{addr}</p>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{doc.name}</p>
+                      <p className="text-xs font-mono text-slate-500 mt-0.5">{doc.address}</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" color="danger" variant="flat" onPress={() => handleRefuse(addr)}>
+                    <Button size="sm" color="danger" variant="flat" onPress={() => handleRefuse(doc.address)}>
                       Decline
                     </Button>
-                    <Button size="sm" color="success" className="font-semibold" onPress={() => handleGrant(addr)}>
+                    <Button size="sm" color="success" className="font-semibold" onPress={() => handleGrant(doc.address)}>
                       Grant Access
                     </Button>
                   </div>
@@ -136,6 +138,8 @@ export default function MyDoctors() {
           emptyContent={loading ? "Verifying blockchain authorizations..." : "No doctors currently have access to your records."}
           renderCell={(item, columnKey) => {
             switch(columnKey) {
+              case 'name':
+                return <span className="font-medium text-slate-800 dark:text-slate-200">{item.name}</span>
               case 'address':
                 return <span className="font-mono text-xs">{item.address}</span>
               case 'status':

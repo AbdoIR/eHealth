@@ -14,16 +14,16 @@ import {
 } from '../ui/modalStyles'
 
 export default function AddPatientModal({ isOpen, onClose, onAdd }) {
-  const [draft, setDraft] = useState({ address: '', name: '', dob: '', condition: '', status: 'Active' })
+  const [draft, setDraft] = useState({ address: '', dob: '', condition: '', status: 'Active' })
 
   function handleAdd() {
     if (!draft.address.startsWith('0x') || draft.address.length !== 42) return
-    if (!draft.name.trim() || !draft.dob.trim() || !draft.condition.trim()) return
+    if (!draft.dob.trim() || !draft.condition.trim()) return
     onAdd(draft)
-    setDraft({ address: '', name: '', dob: '', condition: '', status: 'Active' })
+    setDraft({ address: '', dob: '', condition: '', status: 'Active' })
   }
 
-  const isFormInvalid = !draft.address.startsWith('0x') || draft.address.length !== 42 || !draft.name.trim() || !draft.dob.trim() || !draft.condition.trim()
+  const isFormInvalid = !draft.address.startsWith('0x') || draft.address.length !== 42 || !draft.dob.trim() || !draft.condition.trim()
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} backdrop="blur" classNames={modalClassNames}>
@@ -49,13 +49,15 @@ export default function AddPatientModal({ isOpen, onClose, onAdd }) {
                 onChange={(e) => setDraft({ ...draft, address: e.target.value })}
               />
             </FormField>
-            <FormField label="Full Name">
+            
+            <FormField label="Primary Condition" className="md:col-span-2">
               <Input
                 variant="bordered"
-                value={draft.name}
-                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                value={draft.condition}
+                onChange={(e) => setDraft({ ...draft, condition: e.target.value })}
               />
             </FormField>
+
             <FormField label="Date of Birth">
               <Input
                 type="date"
@@ -64,19 +66,14 @@ export default function AddPatientModal({ isOpen, onClose, onAdd }) {
                 onChange={(e) => setDraft({ ...draft, dob: e.target.value })}
               />
             </FormField>
-            <FormField label="Primary Condition" className="md:col-span-2">
-              <Input
-                variant="bordered"
-                value={draft.condition}
-                onChange={(e) => setDraft({ ...draft, condition: e.target.value })}
-              />
-            </FormField>
-            <FormField label="Status">
+
+            <FormField label="Initial Status" description="Triage level">
               <Select
                 variant="bordered"
                 aria-label="Patient status"
-                selectedKeys={[draft.status]}
+                defaultSelectedKeys={[draft.status]}
                 onChange={(e) => setDraft({ ...draft, status: e.target.value })}
+                disableAnimation
               >
                 <SelectItem key="Active" value="Active">Active</SelectItem>
                 <SelectItem key="Critical" value="Critical">Critical</SelectItem>

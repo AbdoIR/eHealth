@@ -1,73 +1,78 @@
-# HealthRecords — Blockchain-Based Medical Records
+# MedDesk — Blockchain-Based Medical Records
 
-A decentralized health records management system built on Ethereum. A Solidity smart contract handles doctor authorization, patient consent, and encrypted medical visit storage. A web front-end for interacting with the contract is planned but not yet implemented.
+A decentralized, security-first health records management system built on Ethereum. MedDesk leverages a Solidity smart contract and a modern React frontend to provide doctors and patients with a tamper-proof, transparent environment for managing medical history.
 
 ## Project Structure
 
 ```
-Blockchain/          # Truffle project (smart contract)
-  contracts/         # Solidity source (HealthRecords.sol)
-  migrations/        # Deployment scripts
-  test/              # JavaScript tests
-  truffle-config.js  # Network configuration (Ganache on port 7545)
+MedDesk/
+├── Blockchain/          # Smart Contract (Solidity + Truffle)
+│   ├── contracts/       # HealthRecords.sol Core Logic
+│   ├── migrations/      # Network Deployment Scripts
+│   ├── test/            # Automated Truffle Test Suite
+│   └── truffle-config.js
+└── Frontend/            # Modern React Web App (Vite + HeroUI)
+    ├── src/
+    │   ├── blockchain/  # Contract ABIs & Client Configs
+    │   ├── components/  # Premium UI Components
+    │   ├── context/     # Auth & Appearance State
+    │   ├── hooks/       # Blockchain Interaction Hooks
+    │   └── pages/       # Application Views
 ```
+
+## Core Features
+
+- **Modern Premium Design**: Professional medical dashboard with dark mode support, glassmorphism, and responsive layouts.
+- **Identity & Authorization**: Role-based access control for Doctors (authorized by owners) and Patients (self-registration).
+- **Decentralized Consent**: A strict on-chain permission system. Doctors cannot record data without explicit, verifiable consent from the patient.
+- **Immutable Audit Trail**: All visit records are cryptographically secured and anchored to the local blockchain via MetaMask.
+- **Encrypted Storage**: Sensitive medical details are encrypted before being anchored to ensure privacy.
 
 ## Smart Contract — `HealthRecords.sol`
 
-**Roles:**
-
-- **Owner** — deploys the contract; can add/remove doctors.
-- **Doctor** — authorized addresses that can add medical visits for consenting patients.
-- **Patient** — any address that grants/revokes consent to doctors and views their own history.
-
-**Functions:**
-
 | Function                             | Access                     | Description                                 |
 | ------------------------------------ | -------------------------- | ------------------------------------------- |
-| `addDoctor(address)`                 | Owner                      | Authorize a new doctor                      |
+| `addDoctor(...)`                     | Owner                      | Authorize a new doctor with clinic details  |
 | `removeDoctor(address)`              | Owner                      | Revoke doctor authorization                 |
-| `grantConsent(address)`              | Patient                    | Allow a doctor to add visits                |
-| `revokeConsent(address)`             | Patient                    | Remove a doctor's access                    |
-| `addVisit(address, bytes)`           | Doctor                     | Record an encrypted visit for a patient     |
-| `getHistory(address, offset, limit)` | Patient / Consented Doctor | Paginated visit history                     |
-| `getVisitCount(address)`             | Patient / Consented Doctor | Total number of visits                      |
-| `isDoctor(address)`                  | Anyone                     | Check if an address is an authorized doctor |
-| `patientConsent(address, address)`   | Anyone                     | Check consent between a patient and doctor  |
+| `registerPatient(...)`               | Patient                    | Create a verifiable patient profile         |
+| `requestConsent(address)`            | Doctor                     | Initiate an on-chain permission request     |
+| `grantConsent(address)`              | Patient                    | Approve medical access for a specific doctor|
+| `addVisit(address, bytes)`           | Doctor                     | Record an encrypted visit (Consent required)|
+| `getHistory(address, ...)`           | Patient / Authorized Doctor| Fetch paginated medical history             |
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) (v16+)
+- [Node.js](https://nodejs.org/) (v18+)
 - [Truffle](https://trufflesuite.com/) — `npm install -g truffle`
 - [Ganache](https://trufflesuite.com/ganache/) — local Ethereum blockchain (port 7545)
+- [MetaMask](https://metamask.io/) browser extension
 
 ## Getting Started
 
-### 1. Start Ganache
-
-Open Ganache and ensure it runs on `http://127.0.0.1:7545`.
-
-### 2. Deploy the Contract
-
+### 1. Smart Contract Deployment
 ```bash
 cd Blockchain
-npm install          # if needed
-truffle migrate --network development
+npm install
+truffle migrate --reset
 ```
 
-Note the deployed contract address from the output.
-
-### 3. Run Tests
-
+### 2. Frontend Setup
 ```bash
-cd Blockchain
-truffle test
+cd Frontend
+npm install
+npm run dev
 ```
+
+Ensure your MetaMask is connected to your local Ganache network (Custom RPC: `http://127.0.0.1:7545`).
 
 ## Roadmap
 
-- [x] Smart contract (Solidity) — doctor management, patient consent, encrypted visit storage
-- [x] Unit tests (Truffle/JS)
-- [ ] Web front-end (React + Web3.js / MetaMask integration)
+- [x] Solidity Smart Contract (Core Ledger & Consent)
+- [x] Automated Unit Test Suite (19/19 Passing)
+- [x] React Frontend with MetaMask Integration
+- [x] Role-Based Separation (Doctor/Patient Dashboards)
+- [x] Encrypted Medical Record Flow
+- [ ] IPFS Integration for Heavy Scans/Attachments
 
 ## License
 

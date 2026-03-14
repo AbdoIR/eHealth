@@ -48,14 +48,17 @@ export function AuthProvider({ children }) {
       if (user) {
         try {
           const contract = await getContract(false);
-          const isDoc = await contract.isDoctor(user.address);
-          const isPat = await contract.isPatient(user.address);
-          if (!isDoc && !isPat) {
+          const isDocObj = await contract.doctors(user.address);
+          const isPatObj = await contract.patients(user.address);
+          
+          if (!isDocObj.isRegistered && !isPatObj.isRegistered) {
             logout();
           }
         } catch (e) {
-          // If we can't even talk to the contract, the session is untrusted
-          logout();
+          // If we can't talk to the contract (e.g. network switch), 
+          // we don't logout immediately to avoid kicking the user out 
+          // during temporary RPC flicker.
+          console.warn("Startup verification deferred:", e.message);
         }
       }
     }
@@ -71,19 +74,52 @@ export function AuthProvider({ children }) {
       const address = accounts[0].toLowerCase()
 
       const contract = await getContract(false)
-      const isDoctor = await contract.isDoctor(address)
-      const isPatient = await contract.isPatient(address)
+      
+      const isDoctorObj = await contract.doctors(address)
+      const isPatientObj = await contract.patients(address)
+      
+      const isDoctor = isDoctorObj.isRegistered
+      const isPatient = isPatientObj.isRegistered
       
       if (isDoctor || isPatient) {
+        let name = ''
+        let email = address.slice(0, 10) + '@meddesk.eth'
+        let bloodType = ''
+        let phone = ''
+        let clinic = ''
+        let timezone = 'America/New_York'
+        let workingHoursStart = '08:00'
+        let workingHoursEnd = '18:00'
+
+        if (isDoctor) {
+           const docStruct = await contract.doctors(address)
+           name = docStruct.name
+           clinic = docStruct.clinic
+           timezone = docStruct.timezone
+           workingHoursStart = docStruct.workingHoursStart
+           workingHoursEnd = docStruct.workingHoursEnd
+        } else {
+           const profile = await contract.getPatientProfile(address)
+           name = profile.name
+           bloodType = profile.bloodType
+           phone = profile.phone
+           email = profile.email || email
+        }
+
         const userType = isDoctor ? 'doctor' : 'patient'
         const safeUser = {
           id: address, 
           address,
           userType,
-          name: isDoctor ? 'Doctor ' + address.slice(0, 6) : 'Patient ' + address.slice(0, 6),
+          name: name || (isDoctor ? 'Doctor ' + address.slice(0, 6) : 'Patient ' + address.slice(0, 6)),
           role: isDoctor ? 'Authorized Doctor' : 'Registered Patient',
-          email: address.slice(0, 10) + '@meddesk.eth',
-          clinic: isDoctor ? 'Blockchain Network' : '',
+          email,
+          bloodType,
+          phone,
+          clinic,
+          timezone,
+          workingHoursStart,
+          workingHoursEnd
         }
         saveJSON(USER_STORAGE_KEY, safeUser)
         setUser(safeUser)
@@ -98,7 +134,18 @@ export function AuthProvider({ children }) {
     }
   }
 
-  async function register({ userType, doctorAddress }) {
+  async function register({ 
+    userType, 
+    doctorAddress, 
+    name = '', 
+    bloodType = '', 
+    phone = '', 
+    email = '',
+    clinic = '',
+    timezone = '',
+    workingHoursStart = '',
+    workingHoursEnd = '' 
+  }) {
     if (!window.ethereum) return { ok: false, message: 'MetaMask is not installed.' }
 
     try {
@@ -116,20 +163,31 @@ export function AuthProvider({ children }) {
         if (!doctorAddress || doctorAddress.length !== 42) {
            return { ok: false, message: 'Please provide a valid Ethereum address for the doctor.' }
         }
+        if (!name.trim()) return { ok: false, message: 'Doctor name is required.' }
+        if (!clinic.trim()) return { ok: false, message: 'Clinic Name is required.' }
         
-        const isDoc = await contract.isDoctor(doctorAddress)
-        if (isDoc) return { ok: false, message: 'This address is already an authorized doctor.' }
+        const isDocObj = await contract.doctors(doctorAddress)
+        if (isDocObj.isRegistered) return { ok: false, message: 'This address is already an authorized doctor.' }
 
-        const tx = await contract.addDoctor(doctorAddress)
+        const tx = await contract.addDoctor(
+           doctorAddress, 
+           name, 
+           clinic, 
+           timezone, 
+           workingHoursStart, 
+           workingHoursEnd
+        )
         await tx.wait()
 
         return { ok: true }
       }
 
-      const isDoc = await contract.isDoctor(address)
-      if (isDoc) return { ok: false, message: 'This address is already an authorized doctor.' }
+      const isDocObj = await contract.doctors(address)
+      if (isDocObj.isRegistered) return { ok: false, message: 'This address is already an authorized doctor.' }
 
-      const tx = await contract.registerPatient()
+      if (!name.trim()) return { ok: false, message: 'Patient name is required.' }
+
+      const tx = await contract.registerPatient(name, bloodType, phone, email)
       await tx.wait() // Wait for block confirmation
 
       // Auto-login upon successful registration

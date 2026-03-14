@@ -100,6 +100,7 @@ export default function Records() {
           className="max-w-xs"
           selectedKeys={[typeFilter]}
           onChange={(e) => setTypeFilter(e.target.value)}
+          disableAnimation
         >
           <SelectItem key="all" value="all">All Types</SelectItem>
           <SelectItem key="report" value="report">Reports</SelectItem>

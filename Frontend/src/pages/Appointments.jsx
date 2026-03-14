@@ -75,36 +75,38 @@ export default function Appointments() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
         {/* Calendar */}
-        <Card className="p-0">
-          <DayPicker
-            mode="single"
-            selected={selectedDay}
-            onSelect={setSelectedDay}
-            className="m-4"
-          />
+        <Card className="p-0 overflow-x-auto">
+          <div className="flex justify-center p-2 sm:p-4 min-w-min">
+            <DayPicker
+              mode="single"
+              selected={selectedDay}
+              onSelect={setSelectedDay}
+              className="m-0 sm:m-4"
+            />
+          </div>
         </Card>
 
         {/* Today's Schedule */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 overflow-x-auto">
           <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2">
             Today's Schedule
           </h2>
-          <ul className="divide-y divide-slate-100 dark:divide-slate-700">
+          <ul className="divide-y divide-slate-100 dark:divide-slate-700 min-w-[300px]">
             {slots.map((slot) => (
               <li 
                 key={slot.time} 
-                className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 -mx-5 px-5"
+                className="flex flex-col sm:flex-row sm:items-center gap-3 py-3 first:pt-0 last:pb-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 -mx-5 px-5"
                 onClick={() => setSelectedSlot(slot)}
               >
-                <div className="flex items-center gap-2 text-sm font-semibold text-clinical-600 w-20">
+                <div className="flex items-center gap-2 text-sm font-semibold text-clinical-600 sm:w-20 shrink-0">
                   <Clock size={14} />
                   {slot.time}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{slot.patient}</p>
-                  <p className="text-xs text-slate-500">{slot.type}</p>
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{slot.patient}</p>
+                  <p className="text-xs text-slate-500 truncate">{slot.type}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
                   {slot.mode && (
                     <Chip
                       variant="flat"

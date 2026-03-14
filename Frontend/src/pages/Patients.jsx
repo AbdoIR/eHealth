@@ -18,9 +18,11 @@ const STATUS_COLOR_MAP = {
 }
 
 const COLUMNS = [
-  { key: 'id',        label: 'Patient ID' },
+  { key: 'id',        label: 'Patient Address' },
   { key: 'name',      label: 'Name' },
-  { key: 'dob',       label: 'Date of Birth' },
+  { key: 'bloodType', label: 'Blood Type' },
+  { key: 'phone',     label: 'Phone' },
+  { key: 'email',     label: 'Email' },
   { key: 'condition', label: 'Primary Condition' },
   { key: 'status',    label: 'Status' },
   { key: 'actions',   label: 'Actions' },
@@ -127,6 +129,7 @@ export default function Patients() {
                 aria-label="Filter by status"
                 selectedKeys={[statusFilter]}
                 onChange={(e) => setStatusFilter(e.target.value)}
+                disableAnimation
               >
                 <SelectItem key="all" value="all">All Statuses</SelectItem>
                 <SelectItem key="Active" value="Active">Active</SelectItem>
@@ -151,9 +154,12 @@ export default function Patients() {
           onRowClick={(item) => navigate(`/history?p=${item.id}`)}
           renderCell={(item, columnKey) => {
             switch(columnKey) {
-              case 'id': return item.id
-              case 'name': return item.name
-              case 'dob': return item.dob
+              case 'id': 
+                return <span className="font-mono text-xs">{item.id.slice(0, 8)}...{item.id.slice(-6)}</span>
+              case 'name': return <span className="font-semibold text-slate-800 dark:text-slate-200">{item.name}</span>
+              case 'bloodType': return item.bloodType || 'N/A'
+              case 'phone': return <span className="text-slate-500">{item.phone || 'N/A'}</span>
+              case 'email': return <span className="text-slate-500">{item.email || 'N/A'}</span>
               case 'condition': return item.condition
               case 'status':
                 return <Chip color={STATUS_COLOR_MAP[item.status]} variant="flat">{item.status}</Chip>

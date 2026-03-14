@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CalendarPlus } from 'lucide-react'
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Input, Button, Select, SelectItem } from '@heroui/react'
 import FormField from '../ui/FormField'
+import { usePatients } from '../../hooks/usePatients'
 import {
   modalAccentIconClass,
   modalBodyClass,
@@ -15,6 +16,10 @@ import {
 
 export default function AddAppointmentModal({ isOpen, onClose, onAdd }) {
   const [draft, setDraft] = useState({ time: '', patient: '', type: '', mode: 'in-person' })
+  const { patients } = usePatients()
+
+  // Only show patients who have granted consent
+  const consentedPatients = patients.filter(p => p.consentStatus === 'granted')
 
   function handleAdd() {
     onAdd(draft)
@@ -24,7 +29,7 @@ export default function AddAppointmentModal({ isOpen, onClose, onAdd }) {
   const isFormInvalid = !draft.time.trim() || !draft.patient.trim() || !draft.type.trim()
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} backdrop="blur" classNames={modalClassNames}>
+    <Modal isOpen={isOpen} onClose={onClose} backdrop="blur" classNames={modalClassNames} disableAnimation>
       <ModalContent className={modalSurfaceClass}>
         <ModalHeader className={modalHeaderClass}>
           <div className="flex items-start gap-3">
@@ -48,11 +53,26 @@ export default function AddAppointmentModal({ isOpen, onClose, onAdd }) {
               />
             </FormField>
             <FormField label="Patient Name">
-              <Input
+              <Select
                 variant="bordered"
-                value={draft.patient}
+                aria-label="Patient Name"
+                placeholder="Select a patient"
+                selectedKeys={draft.patient ? [draft.patient] : []}
                 onChange={(e) => setDraft({ ...draft, patient: e.target.value })}
-              />
+                disableAnimation
+              >
+                {consentedPatients.length > 0 ? (
+                  consentedPatients.map(p => (
+                    <SelectItem key={p.id || p.name} value={p.name}>
+                      {p.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem key="no-patients" value="" isDisabled>
+                    No approved patients
+                  </SelectItem>
+                )}
+              </Select>
             </FormField>
             <FormField label="Appointment Type">
               <Input
@@ -64,8 +84,10 @@ export default function AddAppointmentModal({ isOpen, onClose, onAdd }) {
             <FormField label="Mode">
               <Select
                 variant="bordered"
+                aria-label="Appointment Mode"
                 selectedKeys={[draft.mode]}
                 onChange={(e) => setDraft({ ...draft, mode: e.target.value })}
+                disableAnimation
               >
                 <SelectItem key="in-person" value="in-person">In-Person</SelectItem>
                 <SelectItem key="video" value="video">Video</SelectItem>
