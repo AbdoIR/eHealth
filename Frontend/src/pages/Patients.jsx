@@ -10,6 +10,7 @@ import {
 } from '@heroui/react'
 import { usePatients } from '../hooks/usePatients'
 import AddPatientModal from '../components/patients/AddPatientModal'
+import ConfirmModal from '../components/ui/ConfirmModal'
 
 const STATUS_COLOR_MAP = {
   Active:     'success',
@@ -23,7 +24,7 @@ const COLUMNS = [
   { key: 'bloodType', label: 'Blood Type' },
   { key: 'phone',     label: 'Phone' },
   { key: 'email',     label: 'Email' },
-  { key: 'condition', label: 'Primary Condition' },
+  { key: 'primaryCondition', label: 'Primary Condition' },
   { key: 'status',    label: 'Status' },
   { key: 'actions',   label: 'Actions' },
 ]
@@ -35,6 +36,7 @@ export default function Patients() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [showFilters, setShowFilters] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [patientToRemove, setPatientToRemove] = useState(null)
   const [page, setPage] = useState(1)
 
   const pageSize = 5
@@ -45,7 +47,7 @@ export default function Patients() {
       const matchesSearch = !q
         || p.name.toLowerCase().includes(q)
         || p.id.toLowerCase().includes(q)
-        || (p.condition && p.condition.toLowerCase().includes(q))
+        || (p.primaryCondition && p.primaryCondition.toLowerCase().includes(q))
       const matchesStatus = statusFilter === 'all' || p.status === statusFilter
       return matchesSearch && matchesStatus
     })
@@ -71,9 +73,10 @@ export default function Patients() {
     }
   }
 
-  function handleRemovePatient(id) {
-    if (window.confirm("Are you sure you want to remove this patient from your directory? This will not delete their blockchain data.")) {
-      removePatient(id)
+  function handleRemovePatient() {
+    if (patientToRemove) {
+      removePatient(patientToRemove.id)
+      setPatientToRemove(null)
     }
   }
 
@@ -160,7 +163,7 @@ export default function Patients() {
               case 'bloodType': return item.bloodType || 'N/A'
               case 'phone': return <span className="text-slate-500">{item.phone || 'N/A'}</span>
               case 'email': return <span className="text-slate-500">{item.email || 'N/A'}</span>
-              case 'condition': return item.condition
+              case 'primaryCondition': return item.primaryCondition
               case 'status':
                 return <Chip color={STATUS_COLOR_MAP[item.status]} variant="flat">{item.status}</Chip>
               case 'actions':
@@ -171,7 +174,7 @@ export default function Patients() {
                     color="danger" 
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent trigger row click
-                      handleRemovePatient(item.id);
+                      setPatientToRemove(item);
                     }}
                   >
                     Remove
@@ -194,6 +197,14 @@ export default function Patients() {
           />
         </div>
       )}
+      <ConfirmModal 
+        isOpen={!!patientToRemove}
+        onClose={() => setPatientToRemove(null)}
+        onConfirm={handleRemovePatient}
+        title="Remove Patient Record"
+        message={`Are you sure you want to remove ${patientToRemove?.name} from your local directory? This will clear your local notes for this patient.`}
+        confirmLabel="Remove Record"
+      />
     </div>
   )
 }

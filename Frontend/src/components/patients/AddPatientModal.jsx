@@ -14,16 +14,16 @@ import {
 } from '../ui/modalStyles'
 
 export default function AddPatientModal({ isOpen, onClose, onAdd }) {
-  const [draft, setDraft] = useState({ address: '', dob: '', condition: '', status: 'Active' })
+  const [draft, setDraft] = useState({ address: '', condition: '', status: 'Active' })
 
   function handleAdd() {
     if (!draft.address.startsWith('0x') || draft.address.length !== 42) return
-    if (!draft.dob.trim() || !draft.condition.trim()) return
+    if (!draft.condition.trim()) return
     onAdd(draft)
-    setDraft({ address: '', dob: '', condition: '', status: 'Active' })
+    setDraft({ address: '', condition: '', status: 'Active' })
   }
 
-  const isFormInvalid = !draft.address.startsWith('0x') || draft.address.length !== 42 || !draft.dob.trim() || !draft.condition.trim()
+  const isFormInvalid = !draft.address.startsWith('0x') || draft.address.length !== 42 || !draft.condition.trim()
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} backdrop="blur" classNames={modalClassNames}>
@@ -55,15 +55,6 @@ export default function AddPatientModal({ isOpen, onClose, onAdd }) {
                 variant="bordered"
                 value={draft.condition}
                 onChange={(e) => setDraft({ ...draft, condition: e.target.value })}
-              />
-            </FormField>
-
-            <FormField label="Date of Birth">
-              <Input
-                type="date"
-                variant="bordered"
-                value={draft.dob}
-                onChange={(e) => setDraft({ ...draft, dob: e.target.value })}
               />
             </FormField>
 

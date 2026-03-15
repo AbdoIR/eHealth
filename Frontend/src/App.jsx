@@ -65,7 +65,7 @@ export default function App() {
             {/* Shared */}
             <Route index                    element={<HomeRedirect />}   />
             <Route path="patients"          element={<Patients />}       />
-            <Route path="appointments"      element={<Appointments />}   />
+            <Route path="appointments"      element={<Navigate to="/" replace />}   />
             <Route path="settings"          element={<Settings />}       />
 
 

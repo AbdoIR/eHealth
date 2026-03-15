@@ -76,8 +76,6 @@ export function usePatients() {
         name: profile.name || metadata.name || ("Patient " + address.slice(0, 6)),
         status: metadata.status || "Active",
         primaryCondition: metadata.condition || "Clinical Record",
-        gender: metadata.gender || "Unknown",
-        dob: metadata.dob || "Unknown",
         bloodType: profile.bloodType || "Unknown",
         phone: profile.phone || "N/A",
         email: profile.email || (address.slice(0, 8) + "@eth.mail"),

@@ -32,14 +32,13 @@ export default function PatientInfoCard({ patient }) {
             </Chip>
           </div>
           <p className="text-sm text-slate-500 mt-0.5">
-            {patient.primaryCondition} · {patient.gender} · {patient.id}
+            {patient.primaryCondition} · {patient.id}
           </p>
         </div>
       </div>
 
       {/* Details grid */}
-      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <InfoPill icon={Calendar} label="Date of Birth" value={patient.dob} />
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
         <InfoPill icon={Droplets} label="Blood Type"    value={patient.bloodType} />
         <InfoPill icon={Phone}    label="Phone"         value={patient.phone} />
         <InfoPill icon={Mail}     label="Email"         value={patient.email} />
