@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import TruffleArtifact from './HealthRecords.json';
-import RemixArtifact from '../../../Blockchain remix/artifacts/HealthRecords.json';
+import RemixArtifact from './RemixArtifact.json';
 
 const SEPOLIA_CHAIN_ID = 11155111; // Sepolia Testnet (Number for bigint comparison)
 const SEPOLIA_CONTRACT_ADDRESS = "0x19a464fDc72875f9934De593D478e5e8B12D5df1";

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { UserPlus, Search, Filter } from 'lucide-react'
+import { UserPlus, Search, Filter, RefreshCw } from 'lucide-react'
 import PageHeader from '../components/ui/PageHeader'
 import FormField from '../components/ui/FormField'
 import DataTable from '../components/ui/DataTable'
@@ -31,7 +31,8 @@ const COLUMNS = [
 
 export default function Patients() {
   const navigate = useNavigate()
-  const { patients, addPatient: addNewPatient, removePatient } = usePatients()
+  const { patients, addPatient: addNewPatient, removePatient, syncPatientsFromHistory } = usePatients()
+  const [isSyncing, setIsSyncing] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [showFilters, setShowFilters] = useState(false)
@@ -80,19 +81,43 @@ export default function Patients() {
     }
   }
 
+  async function handleSync() {
+    setIsSyncing(true)
+    try {
+      const result = await syncPatientsFromHistory()
+      if (result.ok) {
+        // You could add a toast here if available
+        console.log(`Sync complete: ${result.count || 0} patients recovered.`)
+      }
+    } finally {
+      setIsSyncing(false)
+    }
+  }
+
   return (
     <div>
       <PageHeader
         title="Patient Directory"
         subtitle="Search, browse, and manage all registered patients."
         actionButton={
-          <Button
-            className="bg-clinical-600 text-white hover:bg-clinical-700"
-            startContent={<UserPlus size={15} />}
-            onPress={() => setShowAddForm(true)}
-          >
-            Add Patient
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="flat"
+              color="primary"
+              startContent={<RefreshCw size={15} className={isSyncing ? 'animate-spin' : ''} />}
+              onPress={handleSync}
+              isLoading={isSyncing}
+            >
+              Sync Directory
+            </Button>
+            <Button
+              className="bg-clinical-600 text-white hover:bg-clinical-700"
+              startContent={<UserPlus size={15} />}
+              onPress={() => setShowAddForm(true)}
+            >
+              Add Patient
+            </Button>
+          </div>
         }
       />
 
