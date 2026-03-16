@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getInitials } from '../layouts/TopNavbar'
+import { getInitials } from '../utils/stringUtils'
 
 describe('getInitials utility (from Navbar)', () => {
   it('should return empty string for empty input', () => {
