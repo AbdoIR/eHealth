@@ -181,5 +181,78 @@ export function usePatients() {
      refreshConsents();
   }, [user?.address]); // Dependency on login
 
-  return { patients, searchPatients, addPatient: addPatientByAddress, removePatient, getPatientById, refreshConsents }
+  // Scan blockchain for all patients this doctor has ever added visits for
+  const syncPatientsFromHistory = useCallback(async () => {
+    if (!user?.address) return { ok: false, message: "No user logged in." };
+    
+    try {
+      const contract = await getContract();
+      // Filter events where the doctor is the current user
+      const filter = contract.filters.VisitAdded(null, user.address);
+      const events = await contract.queryFilter(filter, 0, "latest");
+      
+      const uniquePatients = [...new Set(events.map(e => e.args.patient.toLowerCase()))];
+      
+      if (uniquePatients.length === 0) {
+        return { ok: true, message: "No patient history found on-chain." };
+      }
+
+      // Filter out patients we already have locally
+      const existingIds = new Set(patients.map(p => p.id.toLowerCase()));
+      const newPatientIds = uniquePatients.filter(id => !existingIds.has(id));
+
+      if (newPatientIds.length === 0) {
+        return { ok: true, message: "Your directory is already up to date." };
+      }
+
+      // Fetch profiles for the new patients found
+      const recoveredPatients = await Promise.all(newPatientIds.map(async (addr) => {
+        try {
+          const profile = await contract.getPatientProfile(addr);
+          const { checkConsentState } = await import('../blockchain/consent');
+          const { isGranted } = await checkConsentState(addr, user.address);
+
+          return {
+            id: addr,
+            name: profile.name || ("Recovered Patient " + addr.slice(0, 6)),
+            status: "Active",
+            primaryCondition: "Recovered from Chain",
+            bloodType: profile.bloodType || "Unknown",
+            phone: profile.phone || "N/A",
+            email: profile.email || "N/A",
+            consentStatus: isGranted ? 'granted' : 'pending'
+          };
+        } catch (e) {
+          console.error(`Failed to recover profile for ${addr}:`, e);
+          return null;
+        }
+      }));
+
+      const finalRecovered = recoveredPatients.filter(p => p !== null);
+      
+      if (finalRecovered.length > 0) {
+        setPatients(prev => {
+          const updated = [...prev, ...finalRecovered];
+          saveToCache(updated);
+          return updated;
+        });
+        return { ok: true, count: finalRecovered.length };
+      }
+
+      return { ok: true, count: 0 };
+    } catch (error) {
+      console.error("Directory sync failed:", error);
+      return { ok: false, message: error.message };
+    }
+  }, [patients, user, storageKey]);
+
+  return { 
+    patients, 
+    searchPatients, 
+    addPatient: addPatientByAddress, 
+    removePatient, 
+    getPatientById, 
+    refreshConsents,
+    syncPatientsFromHistory
+  }
 }
