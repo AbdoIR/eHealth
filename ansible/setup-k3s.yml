@@ -1,0 +1,34 @@
+---
+- name: Configuration de base et Docker
+  hosts: all
+  become: yes
+  tasks:
+    - name: Mise à jour des paquets
+      apt: update_cache=yes upgrade=dist
+
+    - name: Installation de Docker
+      apt:
+        name: docker.io
+        state: present
+
+- name: Installation du Master Node
+  hosts: master
+  become: yes
+  tasks:
+    - name: Installer k3s sur le Master
+      shell: curl -sfL https://get.k3s.io | sh -
+      register: k3s_install
+
+    - name: Récupérer le Node Token
+      shell: cat /var/lib/rancher/k3s/server/node-token
+      register: node_token
+
+- name: Installation du Worker Node
+  hosts: worker
+  become: yes
+  vars:
+    master_ip: "{{ hostvars['k8s-master']['ansible_host'] }}"
+    token: "{{ hostvars['k8s-master']['node_token']['stdout'] }}"
+  tasks:
+    - name: Joindre le cluster k3s
+      shell: "curl -sfL https://get.k3s.io | K3S_URL=https://{{ master_ip }}:6443 K3S_TOKEN={{ token }} sh -"
