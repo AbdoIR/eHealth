@@ -29,8 +29,8 @@ pipeline {
     stage('3. Deploy to Kubernetes') {
       steps {
         script {
-          bat 'kubectl apply -f k8s/deployment.yml'
-          bat 'kubectl rollout restart deployment/meddesk-ui'
+          sh 'kubectl apply -f k8s/deployment.yml'
+          sh 'kubectl rollout restart deployment/meddesk-ui'
         }
       }
     }
