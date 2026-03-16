@@ -11,15 +11,7 @@ import {
   Button,
 } from '@heroui/react'
 
-/** Returns up-to-two uppercase initials from a full name string. */
-function getInitials(name = '') {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join('')
-}
+import { getInitials } from '../utils/stringUtils'
 
 /**
  * TopNavbar
@@ -58,9 +50,14 @@ export default function TopNavbar({ onMenuClick }) {
       <div className="flex items-center gap-2">
 
         {/* ── User profile ── */}
-        <Dropdown placement="bottom-end">
+        <Dropdown 
+          placement="bottom-end"
+          classNames={{
+            content: "p-0 border-none bg-transparent shadow-none"
+          }}
+        >
           <DropdownTrigger>
-            <button className="flex items-center gap-2.5 pl-1 pr-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors h-10">
+            <button className="flex items-center gap-2.5 pl-1 pr-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors h-10 outline-none">
               <Avatar
                 name={getInitials(user.name)}
                 src={user.avatar}
@@ -75,7 +72,6 @@ export default function TopNavbar({ onMenuClick }) {
           </DropdownTrigger>
           <DropdownMenu
             aria-label="User actions"
-            className="-translate-x-2"
             classNames={userMenuClassNames}
             itemClasses={{
               base: 'rounded-2xl px-3 py-2.5 text-slate-700 transition-colors data-[hover=true]:bg-slate-100 dark:text-slate-100 dark:data-[hover=true]:bg-slate-800',
