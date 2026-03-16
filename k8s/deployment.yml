@@ -17,7 +17,7 @@ spec:
           image: abdoir192/meddesk:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 80
+            - containerPort: 4173
           resources:
             requests:
               cpu: "100m"
