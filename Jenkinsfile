@@ -26,13 +26,13 @@ pipeline {
       }
     }
 
-    /* 
-    stage('3. Deploy to Azure') {
+    stage('3. Deploy to Kubernetes') {
       steps {
-        // Commented out for initial Docker Hub testing
-        sh 'kubectl apply -f k8s/'
+        script {
+          sh 'kubectl apply -f k8s/deployment.yml'
+          sh 'kubectl rollout restart deployment/meddesk-ui'
+        }
       }
     }
-    */
   }
 }
