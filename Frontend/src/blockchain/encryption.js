@@ -6,6 +6,21 @@ const ENCRYPTION_MESSAGE = "Authorize MedDesk to access and encrypt your medical
 const SYSTEM_SALT = "MedDesk_Shared_Clinical_Space_v1";
 
 /**
+ * Throws a helpful error if the Web Crypto API is unavailable.
+ * crypto.subtle is ONLY available in secure contexts (https:// or localhost).
+ * Accessing the app via an IP address (e.g. http://192.168.x.x) will cause this to be undefined.
+ */
+function requireSecureContext() {
+  if (!window.crypto || !window.crypto.subtle) {
+    throw new Error(
+      'Web Crypto API is unavailable. ' +
+      'This app must be accessed via https:// or http://localhost. ' +
+      'Accessing via an IP address over plain HTTP is not supported.'
+    );
+  }
+}
+
+/**
  * Derives a 256-bit symmetric key from a user's signature.
  * @param {Signer} signer - THE PATIENT'S signer (must be the patient to access their records).
  */
@@ -30,10 +45,11 @@ export function derivePatientKey(patientAddress) {
  * @param {string} keyHex - The hex-encoded 256-bit key.
  */
 export async function encryptData(text, keyHex) {
+  requireSecureContext();
   const encoder = new TextEncoder();
   const data = encoder.encode(text);
   const keyBuffer = hexToBytes(keyHex.slice(2));
-  
+
   const cryptoKey = await window.crypto.subtle.importKey(
     "raw",
     keyBuffer,
@@ -63,6 +79,7 @@ export async function encryptData(text, keyHex) {
  * @param {string} keyHex - The hex-encoded 256-bit key.
  */
 export async function decryptData(hexData, keyHex) {
+  requireSecureContext();
   const combined = hexToBytes(hexData.slice(2));
   const iv = combined.slice(0, 12);
   const ciphertext = combined.slice(12);
