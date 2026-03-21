@@ -8,6 +8,9 @@ export default defineConfig({
       allow: ['..']
     }
   },
+  optimizeDeps: {
+    exclude: ['@noble/ciphers']
+  },
   test: {
     globals: true,
     environment: 'jsdom',
@@ -15,3 +18,4 @@ export default defineConfig({
     css: true,
   }
 })
+
