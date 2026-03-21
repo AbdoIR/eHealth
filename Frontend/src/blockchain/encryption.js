@@ -1,24 +1,11 @@
 import { ethers } from 'ethers';
+import { gcm } from '@noble/ciphers/aes';
+import { randomBytes } from '@noble/ciphers/webcrypto';
 
 const ENCRYPTION_MESSAGE = "Authorize MedDesk to access and encrypt your medical records. This signature will be used to derive your private encryption key.";
 
 // A deterministic salt used to derive per-patient keys.
 const SYSTEM_SALT = "MedDesk_Shared_Clinical_Space_v1";
-
-/**
- * Throws a helpful error if the Web Crypto API is unavailable.
- * crypto.subtle is ONLY available in secure contexts (https:// or localhost).
- * Accessing the app via an IP address (e.g. http://192.168.x.x) will cause this to be undefined.
- */
-function requireSecureContext() {
-  if (!window.crypto || !window.crypto.subtle) {
-    throw new Error(
-      'Web Crypto API is unavailable. ' +
-      'This app must be accessed via https:// or http://localhost. ' +
-      'Accessing via an IP address over plain HTTP is not supported.'
-    );
-  }
-}
 
 /**
  * Derives a 256-bit symmetric key from a user's signature.
@@ -40,64 +27,40 @@ export function derivePatientKey(patientAddress) {
 }
 
 /**
- * Encrypts data using AES-GCM.
+ * Encrypts data using AES-GCM (via @noble/ciphers — works in all contexts, HTTP or HTTPS).
  * @param {string} text - JSON string of the visit data.
  * @param {string} keyHex - The hex-encoded 256-bit key.
  */
 export async function encryptData(text, keyHex) {
-  requireSecureContext();
   const encoder = new TextEncoder();
   const data = encoder.encode(text);
-  const keyBuffer = hexToBytes(keyHex.slice(2));
+  const key = hexToBytes(keyHex.slice(2));   // 32-byte key
+  const iv = randomBytes(12);                 // 12-byte random nonce
 
-  const cryptoKey = await window.crypto.subtle.importKey(
-    "raw",
-    keyBuffer,
-    "AES-GCM",
-    false,
-    ["encrypt"]
-  );
+  const aes = gcm(key, iv);
+  const encrypted = aes.encrypt(data);       // ciphertext + 16-byte auth tag appended
 
-  const iv = window.crypto.getRandomValues(new Uint8Array(12));
-  const encrypted = await window.crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    cryptoKey,
-    data
-  );
-
-  // Combine IV and Ciphertext for storage
-  const result = new Uint8Array(iv.length + encrypted.byteLength);
+  // Combine IV and Ciphertext for storage (same format as before)
+  const result = new Uint8Array(iv.length + encrypted.length);
   result.set(iv);
-  result.set(new Uint8Array(encrypted), iv.length);
+  result.set(encrypted, iv.length);
 
   return ethers.hexlify(result);
 }
 
 /**
- * Decrypts data using AES-GCM.
+ * Decrypts data using AES-GCM (via @noble/ciphers — works in all contexts, HTTP or HTTPS).
  * @param {string} hexData - The hex-encoded IV + Ciphertext from the blockchain.
  * @param {string} keyHex - The hex-encoded 256-bit key.
  */
 export async function decryptData(hexData, keyHex) {
-  requireSecureContext();
   const combined = hexToBytes(hexData.slice(2));
   const iv = combined.slice(0, 12);
   const ciphertext = combined.slice(12);
-  const keyBuffer = hexToBytes(keyHex.slice(2));
+  const key = hexToBytes(keyHex.slice(2));   // 32-byte key
 
-  const cryptoKey = await window.crypto.subtle.importKey(
-    "raw",
-    keyBuffer,
-    "AES-GCM",
-    false,
-    ["decrypt"]
-  );
-
-  const decrypted = await window.crypto.subtle.decrypt(
-    { name: "AES-GCM", iv },
-    cryptoKey,
-    ciphertext
-  );
+  const aes = gcm(key, iv);
+  const decrypted = aes.decrypt(ciphertext); // verifies auth tag & decrypts
 
   const decoder = new TextDecoder();
   return decoder.decode(decrypted);
