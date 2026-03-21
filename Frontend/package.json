@@ -13,6 +13,7 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@heroui/react": "^2.8.10",
+    "@noble/ciphers": "^2.1.1",
     "ethers": "^6.16.0",
     "flowbite-react": "^0.12.17",
     "framer-motion": "^12.35.2",
