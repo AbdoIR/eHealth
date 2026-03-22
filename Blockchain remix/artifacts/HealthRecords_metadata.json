@@ -96,6 +96,37 @@
 						"type": "address"
 					},
 					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "patient",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "primaryCondition",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint8",
+						"name": "status",
+						"type": "uint8"
+					}
+				],
+				"name": "DirectoryMetadataUpdated",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "doctor",
+						"type": "address"
+					},
+					{
 						"indexed": false,
 						"internalType": "string",
 						"name": "name",
@@ -269,6 +300,40 @@
 						"internalType": "string",
 						"name": "workingHoursEnd",
 						"type": "string"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_doctor",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_patient",
+						"type": "address"
+					}
+				],
+				"name": "getDirectoryMetadata",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "primaryCondition",
+						"type": "string"
+					},
+					{
+						"internalType": "uint8",
+						"name": "status",
+						"type": "uint8"
+					},
+					{
+						"internalType": "bool",
+						"name": "isSet",
+						"type": "bool"
 					}
 				],
 				"stateMutability": "view",
@@ -519,6 +584,29 @@
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_patient",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "_primaryCondition",
+						"type": "string"
+					},
+					{
+						"internalType": "uint8",
+						"name": "_status",
+						"type": "uint8"
+					}
+				],
+				"name": "setDirectoryMetadata",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
 			}
 		],
 		"devdoc": {
@@ -549,11 +637,11 @@
 	},
 	"sources": {
 		"contracts/HealthRecords.sol": {
-			"keccak256": "0x6aa83fc3f464aacb17d8c95968b605215492e55ae15f5a5d9900b346c11a9215",
+			"keccak256": "0xaa0a9c0527f16fef75ca310dd2267801ffa65545dbf1dc21d418c71d32e21eae",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://2c5a4497909aaafb0f467e22922e05e3c137c45744fabee15bd42edce9571948",
-				"dweb:/ipfs/QmQrHpMgKevSqj3hUS7XJtzCgvwEsap9EddrDE62LQLEn5"
+				"bzz-raw://75cf34cd15f3411c83b582c03947d57860950fa1de4fea5a24e64bbbd9f8afbd",
+				"dweb:/ipfs/QmWAJpG5Hfxy8UREE6ttcoMGHwoqNooSdgDY52iSsWq72q"
 			]
 		}
 	},
