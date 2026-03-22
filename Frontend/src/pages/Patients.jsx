@@ -10,7 +10,6 @@ import {
 } from '@heroui/react'
 import { usePatients } from '../hooks/usePatients'
 import AddPatientModal from '../components/patients/AddPatientModal'
-import ConfirmModal from '../components/ui/ConfirmModal'
 
 const STATUS_COLOR_MAP = {
   Active:     'success',
@@ -26,18 +25,16 @@ const COLUMNS = [
   { key: 'email',     label: 'Email' },
   { key: 'primaryCondition', label: 'Primary Condition' },
   { key: 'status',    label: 'Status' },
-  { key: 'actions',   label: 'Actions' },
 ]
 
 export default function Patients() {
   const navigate = useNavigate()
-  const { patients, addPatient: addNewPatient, removePatient, syncPatientsFromHistory } = usePatients()
+  const { patients, addPatient: addNewPatient, syncPatientsFromHistory } = usePatients()
   const [isSyncing, setIsSyncing] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [showFilters, setShowFilters] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
-  const [patientToRemove, setPatientToRemove] = useState(null)
   const [page, setPage] = useState(1)
 
   const pageSize = 5
@@ -71,13 +68,6 @@ export default function Patients() {
        setPage(1)
     } else {
        console.error("Failed to add patient:", result.message)
-    }
-  }
-
-  function handleRemovePatient() {
-    if (patientToRemove) {
-      removePatient(patientToRemove.id)
-      setPatientToRemove(null)
     }
   }
 
@@ -191,20 +181,6 @@ export default function Patients() {
               case 'primaryCondition': return item.primaryCondition
               case 'status':
                 return <Chip color={STATUS_COLOR_MAP[item.status]} variant="flat">{item.status}</Chip>
-              case 'actions':
-                return (
-                  <Button 
-                    size="sm" 
-                    variant="light" 
-                    color="danger" 
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent trigger row click
-                      setPatientToRemove(item);
-                    }}
-                  >
-                    Remove
-                  </Button>
-                )
               default: return null
             }
           }}
@@ -222,14 +198,6 @@ export default function Patients() {
           />
         </div>
       )}
-      <ConfirmModal 
-        isOpen={!!patientToRemove}
-        onClose={() => setPatientToRemove(null)}
-        onConfirm={handleRemovePatient}
-        title="Remove Patient Record"
-        message={`Are you sure you want to remove ${patientToRemove?.name} from your local directory? This will clear your local notes for this patient.`}
-        confirmLabel="Remove Record"
-      />
     </div>
   )
 }

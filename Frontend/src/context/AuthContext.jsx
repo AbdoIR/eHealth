@@ -216,8 +216,10 @@ export function AuthProvider({ children }) {
       if (isDocObj.isRegistered) return { ok: false, message: 'This address is already an authorized doctor.' }
 
       if (!name.trim()) return { ok: false, message: 'Patient name is required.' }
+      if (!email.trim()) return { ok: false, message: 'Patient email is required.' }
+      if (!/^\S+@\S+\.\S+$/.test(email.trim())) return { ok: false, message: 'Please provide a valid email address.' }
 
-      const tx = await contract.registerPatient(name, bloodType, phone, email)
+      const tx = await contract.registerPatient(name, bloodType, phone, email.trim())
       await tx.wait() // Wait for block confirmation
 
       // Auto-login upon successful registration

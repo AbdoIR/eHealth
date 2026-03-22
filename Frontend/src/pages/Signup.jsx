@@ -173,25 +173,35 @@ export default function Signup() {
                    labelPlacement="outside"
                  />
                  <div className="grid grid-cols-2 gap-4">
-                   <Input
-                     label="Blood Type"
-                     value={bloodType}
-                     onValueChange={setBloodType}
-                     placeholder="e.g. O+"
-                     variant="bordered"
-                     size="sm"
-                     labelPlacement="outside"
-                   />
-                   <Input
-                     label="Phone Number"
-                     value={phone}
-                     onValueChange={setPhone}
-                     placeholder="(555) 123-4567"
-                     variant="bordered"
-                     size="sm"
-                     labelPlacement="outside"
-                   />
-                 </div>
+                  <Input
+                    label="Blood Type"
+                    value={bloodType}
+                    onValueChange={setBloodType}
+                    placeholder="e.g. O+"
+                    variant="bordered"
+                    size="sm"
+                    labelPlacement="outside"
+                  />
+                  <Input
+                    label="Phone Number"
+                    value={phone}
+                    onValueChange={setPhone}
+                    placeholder="(555) 123-4567"
+                    variant="bordered"
+                    size="sm"
+                    labelPlacement="outside"
+                  />
+                </div>
+                <Input
+                  label="Email Address"
+                  type="email"
+                  value={email}
+                  onValueChange={setEmail}
+                  placeholder="e.g. john.doe@mail.com"
+                  variant="bordered"
+                  size="sm"
+                  labelPlacement="outside"
+                />
               </div>
             )}
 

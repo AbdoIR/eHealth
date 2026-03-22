@@ -3,16 +3,27 @@ import TruffleArtifact from './HealthRecords.json';
 import RemixArtifact from './RemixArtifact.json';
 
 const SEPOLIA_CHAIN_ID = 11155111; // Sepolia Testnet (Number for bigint comparison)
-const SEPOLIA_CONTRACT_ADDRESS = "0x19a464fDc72875f9934De593D478e5e8B12D5df1";
+const SEPOLIA_CONTRACT_ADDRESS = "0x8Efc88d15C62aE691fAd4785cA1Ba77966323bb5";
 
 // Helper to gracefully extract ABI regardless of Truffle vs Remix formats
+function extractAbi(artifact) {
+  if (Array.isArray(artifact?.abi)) return artifact.abi;
+  if (Array.isArray(artifact?.data?.abi)) return artifact.data.abi;
+  if (Array.isArray(artifact)) return artifact;
+  return [];
+}
+
 function getAbi(chainId) {
   const isSepolia = chainId.toString() === SEPOLIA_CHAIN_ID.toString();
-  
-  if (isSepolia) {
-    return RemixArtifact.abi || RemixArtifact;
+  const preferred = isSepolia ? extractAbi(RemixArtifact) : extractAbi(TruffleArtifact);
+  const fallback = isSepolia ? extractAbi(TruffleArtifact) : extractAbi(RemixArtifact);
+  const resolved = preferred.length ? preferred : fallback;
+
+  if (!resolved.length) {
+    throw new Error('ABI not found in artifacts.');
   }
-  return TruffleArtifact.abi;
+
+  return resolved;
 }
 
 /**
