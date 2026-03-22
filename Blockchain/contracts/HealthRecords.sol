@@ -21,9 +21,16 @@ contract HealthRecords {
         string email;
     }
 
+    struct DirectoryMetadata {
+        string primaryCondition;
+        uint8 status;
+        bool isSet;
+    }
+
     // State Variables
     mapping(address => Patient) public patients;
     mapping(address => Doctor) public doctors;
+    mapping(address => mapping(address => DirectoryMetadata)) private directoryMetadata;
 
     // Consent mappings: mapping(patient => mapping(doctor => state))
     mapping(address => mapping(address => bool)) public patientConsent;
@@ -37,6 +44,7 @@ contract HealthRecords {
     event PatientRegistered(address indexed patient, string name);
     event DoctorAdded(address indexed doctor, string name, string clinic);
     event DoctorRemoved(address indexed doctor);
+    event DirectoryMetadataUpdated(address indexed doctor, address indexed patient, string primaryCondition, uint8 status);
     event VisitAdded(address indexed patient, address indexed doctor, uint256 timestamp, bytes encryptedData);
 
     // Modifiers
@@ -126,6 +134,24 @@ contract HealthRecords {
         require(patients[_patient].isRegistered, "Not a registered patient.");
         Patient memory p = patients[_patient];
         return (p.name, p.bloodType, p.phone, p.email);
+    }
+
+    function setDirectoryMetadata(address _patient, string memory _primaryCondition, uint8 _status) public onlyDoctor {
+        require(patients[_patient].isRegistered, "Address is not a registered patient.");
+        require(_status <= 2, "Invalid status value.");
+
+        directoryMetadata[msg.sender][_patient] = DirectoryMetadata({
+            primaryCondition: _primaryCondition,
+            status: _status,
+            isSet: true
+        });
+
+        emit DirectoryMetadataUpdated(msg.sender, _patient, _primaryCondition, _status);
+    }
+
+    function getDirectoryMetadata(address _doctor, address _patient) public view returns (string memory primaryCondition, uint8 status, bool isSet) {
+        DirectoryMetadata memory metadata = directoryMetadata[_doctor][_patient];
+        return (metadata.primaryCondition, metadata.status, metadata.isSet);
     }
 
     // --- Patient Consent ---

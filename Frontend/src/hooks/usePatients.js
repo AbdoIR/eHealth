@@ -3,6 +3,13 @@ import { getContract } from '../blockchain/client'
 import { useAuth } from '../context/AuthContext'
 
 const BASE_STORAGE_KEY = 'hc_patients_v3'
+const STATUS_TO_CODE = { Active: 0, Critical: 1, Discharged: 2 }
+const CODE_TO_STATUS = { 0: 'Active', 1: 'Critical', 2: 'Discharged' }
+
+function normalizeStatus(status) {
+  if (status === 'Critical' || status === 'Discharged') return status
+  return 'Active'
+}
 
 export function usePatients() {
   const { user } = useAuth()
@@ -38,6 +45,43 @@ export function usePatients() {
     localStorage.setItem(storageKey, JSON.stringify(updated))
   }
 
+  const getLastKnownPatientMetadata = useCallback((address) => {
+    const target = address.toLowerCase()
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i)
+      if (!key || !key.startsWith(BASE_STORAGE_KEY)) continue
+      try {
+        const raw = localStorage.getItem(key)
+        if (!raw) continue
+        const list = JSON.parse(raw)
+        if (!Array.isArray(list)) continue
+        const found = list.find((p) => p?.id?.toLowerCase?.() === target)
+        if (found) {
+          return {
+            primaryCondition: found.primaryCondition,
+            status: normalizeStatus(found.status),
+          }
+        }
+      } catch {
+      }
+    }
+    return null
+  }, [])
+
+  const readOnChainDirectoryMetadata = useCallback(async (contract, patientAddress) => {
+    if (!user?.address) return null
+    try {
+      const [primaryCondition, statusCode, isSet] = await contract.getDirectoryMetadata(user.address, patientAddress)
+      if (!isSet) return null
+      return {
+        primaryCondition: (primaryCondition || '').trim(),
+        status: CODE_TO_STATUS[Number(statusCode)] || 'Active',
+      }
+    } catch {
+      return null
+    }
+  }, [user?.address])
+
   const addPatientByAddress = useCallback(async (address, metadata = {}) => {
     try {
       const contract = await getContract();
@@ -70,12 +114,14 @@ export function usePatients() {
       }
 
       const profile = await contract.getPatientProfile(address);
+      const initialStatus = normalizeStatus(metadata.status)
+      const initialCondition = (metadata.condition || '').trim() || 'Clinical Record'
 
       const newPatient = {
         id: normalizedAddr,
         name: profile.name || metadata.name || ("Patient " + address.slice(0, 6)),
-        status: metadata.status || "Active",
-        primaryCondition: metadata.condition || "Clinical Record",
+        status: initialStatus,
+        primaryCondition: initialCondition,
         bloodType: profile.bloodType || "Unknown",
         phone: profile.phone || "N/A",
         email: profile.email || (address.slice(0, 8) + "@eth.mail"),
@@ -87,6 +133,18 @@ export function usePatients() {
         saveToCache(updated);
         return updated;
       });
+
+      try {
+        await contract.getDirectoryMetadata(doctorAddress, normalizedAddr)
+        const writableContract = await getContract(true)
+        const tx = await writableContract.setDirectoryMetadata(
+          normalizedAddr,
+          initialCondition,
+          STATUS_TO_CODE[initialStatus]
+        )
+        await tx.wait()
+      } catch {
+      }
 
       return { ok: true, patient: newPatient };
     } catch (error) {
@@ -136,14 +194,6 @@ export function usePatients() {
     return patients.find(p => p.id.toLowerCase() === id.toLowerCase());
   }, [patients]);
 
-  const removePatient = useCallback((address) => {
-    setPatients(prev => {
-      const updated = prev.filter(p => p.id.toLowerCase() !== address.toLowerCase());
-      saveToCache(updated);
-      return updated;
-    });
-  }, [storageKey]);
-
   // Sync offline localStorage states (pending) with actual on-chain truth
   const refreshConsents = useCallback(async () => {
     if (!patients.length || !user?.address) return;
@@ -174,7 +224,7 @@ export function usePatients() {
         setPatients(updatedPatients);
         saveToCache(updatedPatients);
     }
-  }, [patients, user, storageKey]);
+  }, [patients, user, storageKey, getLastKnownPatientMetadata]);
 
   // Run a quick background refresh when the hook mounts
   useEffect(() => {
@@ -187,14 +237,22 @@ export function usePatients() {
     
     try {
       const contract = await getContract();
-      // Filter events where the doctor is the current user
-      const filter = contract.filters.VisitAdded(null, user.address);
-      const events = await contract.queryFilter(filter, 0, "latest");
-      
-      const uniquePatients = [...new Set(events.map(e => e.args.patient.toLowerCase()))];
-      
+
+      // 1) Patients with recorded visits by this doctor
+      const visitFilter = contract.filters.VisitAdded(null, user.address);
+      const visitEvents = await contract.queryFilter(visitFilter, 0, "latest");
+
+      // 2) Patients who granted consent to this doctor (even with zero visits yet)
+      const consentFilter = contract.filters.ConsentGranted(null, user.address);
+      const consentEvents = await contract.queryFilter(consentFilter, 0, "latest");
+
+      const uniquePatients = [...new Set([
+        ...visitEvents.map(e => e.args.patient.toLowerCase()),
+        ...consentEvents.map(e => e.args.patient.toLowerCase())
+      ])];
+
       if (uniquePatients.length === 0) {
-        return { ok: true, message: "No patient history found on-chain." };
+        return { ok: true, message: "No linked patients found on-chain." };
       }
 
       // Filter out patients we already have locally
@@ -212,11 +270,14 @@ export function usePatients() {
           const { checkConsentState } = await import('../blockchain/consent');
           const { isGranted } = await checkConsentState(addr, user.address);
 
+          const onChainMetadata = await readOnChainDirectoryMetadata(contract, addr);
+          const lastKnown = getLastKnownPatientMetadata(addr);
+
           return {
             id: addr,
             name: profile.name || ("Recovered Patient " + addr.slice(0, 6)),
-            status: "Active",
-            primaryCondition: "Recovered from Chain",
+            status: onChainMetadata?.status || lastKnown?.status || "Active",
+            primaryCondition: onChainMetadata?.primaryCondition || lastKnown?.primaryCondition || "Clinical Record",
             bloodType: profile.bloodType || "Unknown",
             phone: profile.phone || "N/A",
             email: profile.email || "N/A",
@@ -244,13 +305,12 @@ export function usePatients() {
       console.error("Directory sync failed:", error);
       return { ok: false, message: error.message };
     }
-  }, [patients, user, storageKey]);
+  }, [patients, user, storageKey, getLastKnownPatientMetadata, readOnChainDirectoryMetadata]);
 
   return { 
     patients, 
     searchPatients, 
     addPatient: addPatientByAddress, 
-    removePatient, 
     getPatientById, 
     refreshConsents,
     syncPatientsFromHistory
