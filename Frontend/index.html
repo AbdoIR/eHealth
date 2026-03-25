@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -11,23 +11,21 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <title>MedDesk — E-Health Dashboard</title>
+    <title>MedDesk | E-Health Dashboard v2</title>
     <!-- Prevent flash of wrong theme: apply dark class & accent before React boots -->
     <script>
       try {
-        var p = JSON.parse(localStorage.getItem('hc_appearance') || '{}')
-        var t = String(p.theme || 'Light').toLowerCase()
-        var isDark = t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-        if (isDark)
-          document.documentElement.classList.add('dark')
-        else
-          document.documentElement.classList.remove('dark')
+        var p = JSON.parse(localStorage.getItem("hc_appearance") || "{}");
+        var t = String(p.theme || "Light").toLowerCase();
+        var isDark =
+          t === "dark" || (t === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        if (isDark) document.documentElement.classList.add("dark");
+        else document.documentElement.classList.remove("dark");
 
-        document.documentElement.style.colorScheme = isDark ? 'dark' : 'light'
+        document.documentElement.style.colorScheme = isDark ? "dark" : "light";
 
-        if (p.accent && p.accent !== 'blue')
-          document.documentElement.dataset.accent = p.accent
-      } catch(e) {}
+        if (p.accent && p.accent !== "blue") document.documentElement.dataset.accent = p.accent;
+      } catch (e) {}
     </script>
   </head>
   <body>
